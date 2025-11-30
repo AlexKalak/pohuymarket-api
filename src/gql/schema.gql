@@ -1,0 +1,35 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+scalar BigInt
+
+type OrdersMatch {
+  blockNumber: Int
+  id: Int
+  logIndex: Int
+  makerAmountFilled: BigInt
+  makerAssetId: String
+  sharePrice: Int
+  takerAmountFilled: BigInt
+  takerAssetId: String
+  takerOrderHash: String
+  takerOrderMaker: String
+  timestamp: Int
+  transactionHash: String
+}
+
+input OrdersMatchWhere {
+  blockNumber: Float
+  id: Float
+  makerAssetId: String
+  pairAddress: String
+  takerAssetId: String
+  takerOrMakerAssetId: String
+  timestamp: Float
+  transactionHash: String
+}
+
+type Query {
+  ordersMatches(first: Int, fromHead: Boolean, skip: Int, where: OrdersMatchWhere): [OrdersMatch!]!
+}
