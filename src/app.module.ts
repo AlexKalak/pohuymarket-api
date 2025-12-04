@@ -8,10 +8,14 @@ import { join } from 'path';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { GQLModule } from './modules/gql/gql.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { RedisModule } from './datasources/redis/redis.module';
+import { PubSubModule } from './events/pubSub.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    RedisModule,
+    PubSubModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/gql/schema.gql'),

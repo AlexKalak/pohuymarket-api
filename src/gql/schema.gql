@@ -2,7 +2,20 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type BidAskUpdate {
+  bestAskUpdate: Order
+  bestBidUpdate: Order
+  marketIdentificator: String
+  marketType: String
+  timestamp: Int
+}
+
 scalar BigInt
+
+type Order {
+  price: Float
+  size: Int
+}
 
 type OrdersMatch {
   blockNumber: Int
@@ -32,4 +45,8 @@ input OrdersMatchWhere {
 
 type Query {
   ordersMatches(first: Int, fromHead: Boolean, skip: Int, where: OrdersMatchWhere): [OrdersMatch!]!
+}
+
+type Subscription {
+  bidAskUpdate(marketIdentificator: String!): BidAskUpdate!
 }
