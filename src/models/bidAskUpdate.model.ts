@@ -14,7 +14,7 @@ export class Order {
 export class BidAskUpdateWhere {
   @Field({ nullable: true })
   @StraightParsable()
-  timestamp_gt?: number;
+  timestamp_gt?: string;
 
   @Field({ nullable: true })
   @StraightParsable()
@@ -35,6 +35,6 @@ export class BidAskUpdate {
   @Field(() => Order, { nullable: true })
   bestAskUpdate: Order | null;
 
-  @Field(() => Int, { nullable: true })
-  timestamp: number;
+  @Field(() => String, { nullable: true })
+  timestamp: string;
 }

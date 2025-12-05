@@ -31,9 +31,8 @@ export class RedisBestBidAskUpdateStreamEntity {
     model.marketIdentificator = this.market_identificator;
     model.bestBidUpdate = this.bid_ask.bid;
     model.bestAskUpdate = this.bid_ask.ask;
-    model.timestamp = this.bid_ask.timestamp;
+    model.timestamp = this.bid_ask.timestamp.toString();
 
     return model;
   }
 }
-

@@ -1,8 +1,5 @@
-import { Args, Int, Query, Resolver, Subscription } from '@nestjs/graphql';
-import { GraphQLError } from 'graphql';
-import { OrdersMatchService } from '../ordersMatchModule/ordersMatch.service';
-import { OrdersMatch, OrdersMatchWhere } from 'src/models/ordersMatch.model';
-import { BidAskUpdate, BidAskUpdateWhere } from 'src/models/bidAskUpdate.model';
+import { Args, Resolver, Subscription } from '@nestjs/graphql';
+import { BidAskUpdate } from 'src/models/bidAskUpdate.model';
 import { OnEvent } from '@nestjs/event-emitter';
 import { BID_ASK_EVENTS } from 'src/events/events';
 import { Inject } from '@nestjs/common';

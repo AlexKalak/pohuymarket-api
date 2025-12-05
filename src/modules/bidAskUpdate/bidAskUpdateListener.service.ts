@@ -26,7 +26,7 @@ export class BidAskUpdateListenerService
   private readonly logger = new Logger();
 
   private stream = 'best_bid_ask_update';
-  private consumerGroup = 'nest_bid_ask_udpate_listener_group';
+  private consumerGroup = 'nest_bid_ask_udpate_listener_group_4';
   private consumer = `nest_bid_ask_update_listner_consumer_${process.pid}`;
   private isListening = false;
   private lastReadID = '';

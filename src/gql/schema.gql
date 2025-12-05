@@ -7,7 +7,7 @@ type BidAskUpdate {
   bestBidUpdate: Order
   marketIdentificator: String
   marketType: String
-  timestamp: Int
+  timestamp: String
 }
 
 scalar BigInt
