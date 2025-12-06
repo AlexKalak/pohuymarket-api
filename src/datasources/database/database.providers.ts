@@ -1,5 +1,9 @@
 import { Provider } from '@nestjs/common';
 import { OrdersMatch } from 'src/models/ordersMatch.model';
+import { KalshiEventEntity } from 'src/modules/events/kalshiEvent.model';
+import { PolymarketEventEntity } from 'src/modules/events/polymarketEvent.model';
+import { KalshiMarketEntity } from 'src/modules/markets/kalshiMarket.model';
+import { PolymarketMarketEntity } from 'src/modules/markets/polymarketMarket.model';
 import { DataSource } from 'typeorm';
 
 export const databaseProviders: Provider[] = [
@@ -13,7 +17,13 @@ export const databaseProviders: Provider[] = [
         username: 'postgres',
         password: '12341234',
         database: 'pohuymarket',
-        entities: [OrdersMatch],
+        entities: [
+          OrdersMatch,
+          PolymarketEventEntity,
+          PolymarketMarketEntity,
+          KalshiEventEntity,
+          KalshiMarketEntity,
+        ],
         synchronize: false, // ❌ very important, don’t let TypeORM change schema
       });
 

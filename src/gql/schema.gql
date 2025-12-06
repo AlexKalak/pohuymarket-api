@@ -12,6 +12,30 @@ type BidAskUpdate {
 
 scalar BigInt
 
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+union EventsUnion = KalshiEvent | PolymarketEvent
+
+type KalshiEvent {
+  markets: [KalshiMarket!]
+  ticker: String
+  title: String
+}
+
+type KalshiMarket {
+  closeTime: DateTime
+  closed: Boolean
+  createdTime: String
+  event: KalshiEvent
+  event_ticker: String
+  marketType: String
+  ticker: String
+  title: String
+}
+
 type Order {
   price: Float
   size: Int
@@ -43,7 +67,45 @@ input OrdersMatchWhere {
   transactionHash: String
 }
 
+type PolymarketEvent {
+  active: Boolean
+  closed: Boolean
+  description: String
+  enableOrderBook: Boolean
+  endDate: DateTime
+  icon: String
+  id: Int
+  image: String
+  markets: [PolymarketMarket!]
+  negRisk: Boolean
+  negRiskMarketID: String
+  slug: String
+  startDate: DateTime
+  title: String
+}
+
+type PolymarketMarket {
+  active: Boolean
+  closed: Boolean
+  conditionId: String
+  endDate: DateTime
+  event: PolymarketEvent
+  event_id: Int
+  icon: String
+  id: Int
+  image: String
+  negRisk: Boolean
+  negRiskMarketID: String
+  negRiskRequestID: String
+  noAssetId: String
+  question: String
+  slug: String
+  startDate: DateTime
+  yesAssetId: String
+}
+
 type Query {
+  events(first: Int, skip: Int, where: OrdersMatchWhere): [EventsUnion!]!
   ordersMatches(first: Int, fromHead: Boolean, skip: Int, where: OrdersMatchWhere): [OrdersMatch!]!
 }
 
