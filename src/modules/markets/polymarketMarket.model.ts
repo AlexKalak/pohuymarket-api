@@ -12,16 +12,41 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-import { MarketType, type IMarket } from './market.interface';
+import { MarketType, MarketWhere, type IMarket } from './market.interface';
 import { type IEvent } from '../events/event.interface';
 import {
+  modelFromPolymarketEventDTO,
+  modelFromPolymarketEventEntity,
   PolymarketEvent,
+  PolymarketEventDTO,
   PolymarketEventEntity,
 } from '../events/polymarketEvent.model';
-import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
+import { StraightParsable } from 'src/models/decorators';
+import { DateScalar } from '../gql/gql.scalars';
+
+@InputType()
+export class PolymarketMarketWhere {
+  @Field({ nullable: true })
+  @StraightParsable()
+  id?: number;
+
+  constructor(marketWhere: MarketWhere) {
+    if (!marketWhere) {
+      return;
+    }
+
+    if (Number(marketWhere.identificator)) {
+      this.id = Number(marketWhere.identificator);
+    }
+  }
+}
 
 @ObjectType()
 export class PolymarketMarket implements IMarket {
+  @Field(() => String, { nullable: true })
+  type: MarketType;
+
   @Field(() => Int, { nullable: true })
   id!: number;
 
@@ -37,10 +62,10 @@ export class PolymarketMarket implements IMarket {
   @Field(() => String, { nullable: true })
   question!: string;
 
-  @Field(() => Date, { nullable: true })
+  @Field(() => DateScalar, { nullable: true })
   startDate!: Date;
 
-  @Field(() => Date, { nullable: true })
+  @Field(() => DateScalar, { nullable: true })
   endDate!: Date;
 
   @Field(() => String, { nullable: true })
@@ -71,12 +96,12 @@ export class PolymarketMarket implements IMarket {
   closed!: boolean;
 
   @Field(() => PolymarketEvent, { nullable: true })
-  event!: Promise<PolymarketEvent>;
+  event!: PolymarketEvent;
 
   Downcast() {
     return this;
   }
-  GetEvent(): Promise<IEvent> {
+  GetEvent(): IEvent {
     return this.event;
   }
   GetIsClosed(): boolean {
@@ -98,7 +123,7 @@ export class PolymarketMarket implements IMarket {
     return this.id.toString();
   }
   GetMarketType(): MarketType {
-    return MarketType.Polymarket;
+    return this.type;
   }
 }
 
@@ -160,30 +185,93 @@ export class PolymarketMarketEntity {
 
   @ManyToOne(() => PolymarketEventEntity)
   @JoinColumn({ name: 'event_id', referencedColumnName: 'id' })
-  event!: Promise<PolymarketEventEntity>;
+  event!: PolymarketEventEntity;
+}
 
-  toModel(): PolymarketMarket {
-    const model = new PolymarketMarket();
-    model.id = this.id;
-    model.conditionId = this.conditionId;
-    model.event_id = this.event_id;
-    model.slug = this.slug;
-    model.question = this.question;
-    model.startDate = this.startDate;
-    model.endDate = this.endDate;
-    model.image = this.image;
-    model.icon = this.icon;
-    model.yesAssetId = this.yesAssetId;
-    model.noAssetId = this.noAssetId;
-    model.negRisk = this.negRisk;
-    model.negRiskMarketID = this.negRiskMarketID;
-    model.negRiskRequestID = this.negRiskRequestID;
-    model.active = this.active;
-    model.closed = this.closed;
-    model.event = this.event?.then((eventEntity) => eventEntity?.toModel());
-
-    return model;
+export function modelFromPolymarketMarketEntity(
+  entity: PolymarketMarketEntity,
+): PolymarketMarket | undefined {
+  if (!entity) {
+    return undefined;
   }
+  const model = new PolymarketMarket();
+  model.type = MarketType.Polymarket;
+
+  model.id = entity.id;
+  model.conditionId = entity.conditionId;
+  model.event_id = entity.event_id;
+  model.slug = entity.slug;
+  model.question = entity.question;
+  model.startDate = entity.startDate;
+  model.endDate = entity.endDate;
+  model.image = entity.image;
+  model.icon = entity.icon;
+  model.yesAssetId = entity.yesAssetId;
+  model.noAssetId = entity.noAssetId;
+  model.negRisk = entity.negRisk;
+  model.negRiskMarketID = entity.negRiskMarketID;
+  model.negRiskRequestID = entity.negRiskRequestID;
+  model.active = entity.active;
+  model.closed = entity.closed;
+
+  if (entity.event) {
+    model.event = modelFromPolymarketEventEntity(entity.event);
+  }
+
+  return model;
+}
+
+export type PolymarketMarketDTO = {
+  id: number;
+  conditionId: string;
+  event_id: number;
+  slug: string;
+  question: string;
+  startDate: string;
+  endDate: string;
+  image: string;
+  icon: string;
+  yesAssetId: string;
+  noAssetId: string;
+  negRisk: boolean;
+  negRiskMarketID: string;
+  negRiskRequestID: string;
+  active: boolean;
+  closed: boolean;
+  event: PolymarketEventDTO;
+};
+
+export function modelFromPolymarketMarketDTO(
+  entity: PolymarketMarketDTO,
+): PolymarketMarket | undefined {
+  if (!entity) {
+    return undefined;
+  }
+  const model = new PolymarketMarket();
+  model.type = MarketType.Polymarket;
+
+  model.id = entity.id;
+  model.conditionId = entity.conditionId;
+  model.event_id = entity.event_id;
+  model.slug = entity.slug;
+  model.question = entity.question;
+  model.startDate = new Date(entity.startDate);
+  model.endDate = new Date(entity.endDate);
+  model.image = entity.image;
+  model.icon = entity.icon;
+  model.yesAssetId = entity.yesAssetId;
+  model.noAssetId = entity.noAssetId;
+  model.negRisk = entity.negRisk;
+  model.negRiskMarketID = entity.negRiskMarketID;
+  model.negRiskRequestID = entity.negRiskRequestID;
+  model.active = entity.active;
+  model.closed = entity.closed;
+
+  if (entity.event) {
+    model.event = modelFromPolymarketEventDTO(entity.event);
+  }
+
+  return model;
 }
 
 @Entity('polymarket_clob_scaning_markets')

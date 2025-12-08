@@ -1,6 +1,6 @@
 import { Field, Float, InputType, Int, ObjectType } from '@nestjs/graphql';
-import { MarketType } from './market.model';
 import { StraightParsable } from './decorators';
+import { MarketType } from 'src/modules/markets/market.interface';
 
 @ObjectType()
 export class Order {

@@ -3,6 +3,18 @@ import { IMarket } from '../markets/market.interface';
 import { StraightParsable } from 'src/models/decorators';
 
 @InputType()
+export class LoadEventInput {
+  @Field()
+  type: string;
+
+  @Field({ nullable: true })
+  slug?: string;
+
+  @Field({ nullable: true })
+  ticker?: string;
+}
+
+@InputType()
 export class EventWhere {
   @Field({ nullable: true })
   @StraightParsable()
@@ -20,7 +32,7 @@ export interface IEvent {
   GetIdentificator(): string;
   GetTitle(): string;
 
-  GetMarkets(): Promise<IMarket[]>;
+  GetMarkets(): IMarket[];
 
   Downcast(): any;
 }

@@ -7,13 +7,17 @@ import {
   OneToMany,
 } from 'typeorm';
 import {
+  modelFromPolymarketMarketDTO,
+  modelFromPolymarketMarketEntity,
   PolymarketMarket,
+  PolymarketMarketDTO,
   PolymarketMarketEntity,
 } from '../markets/polymarketMarket.model';
 import { type IMarket } from '../markets/market.interface';
 import { EventType, EventWhere, IEvent } from './event.interface';
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { StraightParsable } from 'src/models/decorators';
+import { DateScalar } from '../gql/gql.scalars';
 
 @InputType()
 export class PolymarketEventWhere {
@@ -50,10 +54,10 @@ export class PolymarketEvent implements IEvent {
   @Field(() => String, { nullable: true })
   description!: string;
 
-  @Field(() => Date, { nullable: true })
+  @Field(() => DateScalar, { nullable: true })
   startDate!: Date;
 
-  @Field(() => Date, { nullable: true })
+  @Field(() => DateScalar, { nullable: true })
   endDate!: Date;
 
   @Field(() => String, { nullable: true })
@@ -83,8 +87,8 @@ export class PolymarketEvent implements IEvent {
   Downcast() {
     return this;
   }
-  GetMarkets(): Promise<IMarket[]> {
-    return Promise.resolve(this.markets);
+  GetMarkets(): IMarket[] {
+    return this.markets;
   }
   GetTitle(): string {
     return this.title;
@@ -100,6 +104,8 @@ export class PolymarketEvent implements IEvent {
 @Entity('polymarket_events')
 @Unique(['id'])
 export class PolymarketEventEntity {
+  type: string = EventType.Polymarket;
+
   @Index()
   @PrimaryColumn('int')
   id!: number;
@@ -146,27 +152,76 @@ export class PolymarketEventEntity {
 
   @OneToMany(() => PolymarketMarketEntity, (market) => market.event)
   markets!: PolymarketMarketEntity[];
+}
 
-  toModel(): PolymarketEvent {
-    const model = new PolymarketEvent();
-    model.id = this.id;
-    model.slug = this.slug;
-    model.title = this.title;
-    model.description = this.description;
-    model.startDate = this.startDate;
-    model.endDate = this.endDate;
-    model.image = this.image;
-    model.icon = this.icon;
-    model.negRisk = this.negRisk;
-    model.negRiskMarketID = this.negRiskMarketID;
-    model.active = this.active;
-    model.closed = this.closed;
-    model.enableOrderBook = this.enableOrderBook;
+export function modelFromPolymarketEventEntity(
+  entity: PolymarketEventEntity,
+): PolymarketEvent {
+  console.log('entity', entity.title, entity.type);
 
-    model.markets = this.markets?.map((marketEntity) =>
-      marketEntity?.toModel(),
-    );
+  const model = new PolymarketEvent();
 
-    return model;
-  }
+  model.id = entity.id;
+  model.slug = entity.slug;
+  model.title = entity.title;
+  model.description = entity.description;
+  model.startDate = entity.startDate;
+  model.endDate = entity.endDate;
+  model.image = entity.image;
+  model.icon = entity.icon;
+  model.negRisk = entity.negRisk;
+  model.negRiskMarketID = entity.negRiskMarketID;
+  model.active = entity.active;
+  model.closed = entity.closed;
+  model.enableOrderBook = entity.enableOrderBook;
+
+  model.markets = entity.markets
+    ?.map((marketEntity) => modelFromPolymarketMarketEntity(marketEntity))
+    .filter((market) => !!market);
+
+  return model;
+}
+
+export type PolymarketEventDTO = {
+  type: string;
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  image: string;
+  icon: string;
+  negRisk: boolean;
+  negRiskMarketID: string;
+  active: boolean;
+  closed: boolean;
+  enableOrderBook: boolean;
+  markets: PolymarketMarketDTO[];
+};
+
+export function modelFromPolymarketEventDTO(
+  entity: PolymarketEventDTO,
+): PolymarketEvent {
+  const model = new PolymarketEvent();
+
+  model.id = entity.id;
+  model.slug = entity.slug;
+  model.title = entity.title;
+  model.description = entity.description;
+  model.startDate = new Date(entity.startDate);
+  model.endDate = new Date(entity.endDate);
+  model.image = entity.image;
+  model.icon = entity.icon;
+  model.negRisk = entity.negRisk;
+  model.negRiskMarketID = entity.negRiskMarketID;
+  model.active = entity.active;
+  model.closed = entity.closed;
+  model.enableOrderBook = entity.enableOrderBook;
+
+  model.markets = entity.markets
+    ?.map((marketEntity) => modelFromPolymarketMarketDTO(marketEntity))
+    .filter((market) => !!market);
+
+  return model;
 }

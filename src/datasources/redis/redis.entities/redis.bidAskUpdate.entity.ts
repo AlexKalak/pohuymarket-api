@@ -1,5 +1,5 @@
 import { BidAskUpdate, Order } from 'src/models/bidAskUpdate.model';
-import { marketTypeFromString } from 'src/models/market.model';
+import { marketTypeFromString } from 'src/modules/markets/market.interface';
 
 type BidAsk = {
   bid: Order | null;

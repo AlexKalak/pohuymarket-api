@@ -2,6 +2,22 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type ArbitragePair {
+  createdAt: DateScalar
+  id: Int
+  kalshiMarket: KalshiMarket
+  kalshiMarketTicker: String
+  polymarketMarket: PolymarketMarket
+  polymarketMarketID: Int
+  updatedAt: DateScalar
+}
+
+input ArbitragePairWhere {
+  id: Float
+  kalshiMarketTikcer: String
+  polymarketMarketID: Float
+}
+
 type BidAskUpdate {
   bestAskUpdate: Order
   bestBidUpdate: Order
@@ -12,10 +28,16 @@ type BidAskUpdate {
 
 scalar BigInt
 
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
+input CreateArbitragePairInput {
+  kalshiMarketTicker: String!
+  polymarketMarketID: Float!
+}
+
+scalar DateScalar
+
+input EventWhere {
+  identificator: String
+}
 
 union EventsUnion = KalshiEvent | PolymarketEvent
 
@@ -26,14 +48,38 @@ type KalshiEvent {
 }
 
 type KalshiMarket {
-  closeTime: DateTime
+  closeTime: DateScalar
   closed: Boolean
-  createdTime: String
+  createdTime: DateScalar
   event: KalshiEvent
   event_ticker: String
   marketType: String
+  subtitle: String
   ticker: String
   title: String
+  type: String
+}
+
+input LoadEventInput {
+  slug: String
+  ticker: String
+  type: String!
+}
+
+type MarketByTextResponse {
+  kalshi: [KalshiMarket!]!
+  polymarket: [PolymarketMarket!]!
+}
+
+union MarketUnion = KalshiMarket | PolymarketMarket
+
+input MarketWhere {
+  identificator: String
+}
+
+type Mutation {
+  createArbitragePairs(pairs: [CreateArbitragePairInput!]): [ArbitragePair!]!
+  loadEvents(events: [LoadEventInput!]): [EventsUnion!]!
 }
 
 type Order {
@@ -72,7 +118,7 @@ type PolymarketEvent {
   closed: Boolean
   description: String
   enableOrderBook: Boolean
-  endDate: DateTime
+  endDate: DateScalar
   icon: String
   id: Int
   image: String
@@ -80,7 +126,7 @@ type PolymarketEvent {
   negRisk: Boolean
   negRiskMarketID: String
   slug: String
-  startDate: DateTime
+  startDate: DateScalar
   title: String
 }
 
@@ -88,7 +134,7 @@ type PolymarketMarket {
   active: Boolean
   closed: Boolean
   conditionId: String
-  endDate: DateTime
+  endDate: DateScalar
   event: PolymarketEvent
   event_id: Int
   icon: String
@@ -100,12 +146,16 @@ type PolymarketMarket {
   noAssetId: String
   question: String
   slug: String
-  startDate: DateTime
+  startDate: DateScalar
+  type: String
   yesAssetId: String
 }
 
 type Query {
-  events(first: Int, skip: Int, where: OrdersMatchWhere): [EventsUnion!]!
+  arbitragePairs(first: Int, skip: Int, where: ArbitragePairWhere): [ArbitragePair!]!
+  events(first: Int, skip: Int, where: EventWhere): [EventsUnion!]!
+  markets(first: Int, skip: Int, where: MarketWhere): [MarketUnion!]!
+  marketsByText(first: Int, skip: Int, text: String): MarketByTextResponse!
   ordersMatches(first: Int, fromHead: Boolean, skip: Int, where: OrdersMatchWhere): [OrdersMatch!]!
 }
 

@@ -12,14 +12,42 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-import { KalshiEvent, KalshiEventEntity } from '../events/kalshiEvent.model';
+import {
+  KalshiEvent,
+  KalshiEventDTO,
+  KalshiEventEntity,
+  modelFromKalshiEventDTO,
+  modelFromKalshiEventEntity,
+} from '../events/kalshiEvent.model';
 
-import { MarketType, type IMarket } from './market.interface';
+import { MarketType, MarketWhere, type IMarket } from './market.interface';
 import { type IEvent } from '../events/event.interface';
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import { StraightParsable } from 'src/models/decorators';
+import { DateScalar } from '../gql/gql.scalars';
+
+@InputType()
+export class KalshiMarketWhere {
+  @Field({ nullable: true })
+  @StraightParsable()
+  ticker?: string;
+
+  constructor(marketWhere: MarketWhere) {
+    if (!marketWhere) {
+      return;
+    }
+
+    if (marketWhere.identificator) {
+      this.ticker = marketWhere.identificator;
+    }
+  }
+}
 
 @ObjectType()
 export class KalshiMarket implements IMarket {
+  @Field(() => String, { nullable: true })
+  type: MarketType;
+
   @Field(() => String, { nullable: true })
   ticker!: string;
 
@@ -30,9 +58,12 @@ export class KalshiMarket implements IMarket {
   title!: string;
 
   @Field(() => String, { nullable: true })
+  subtitle!: string;
+
+  @Field(() => DateScalar, { nullable: true })
   createdTime!: Date;
 
-  @Field(() => Date, { nullable: true })
+  @Field(() => DateScalar, { nullable: true })
   closeTime!: Date;
 
   @Field(() => String, { nullable: true })
@@ -42,12 +73,12 @@ export class KalshiMarket implements IMarket {
   closed!: boolean;
 
   @Field(() => KalshiEvent, { nullable: true })
-  event!: Promise<KalshiEvent>;
+  event!: KalshiEvent;
 
   Downcast(): any {
     return this;
   }
-  GetEvent(): Promise<IEvent> {
+  GetEvent(): IEvent {
     return this.event;
   }
   GetIsClosed(): boolean {
@@ -60,7 +91,7 @@ export class KalshiMarket implements IMarket {
     return this.createdTime;
   }
   GetQuestion(): string {
-    return 'Question getting from kalshi markets not implemented yet, slomayte progeru ebalo :( ';
+    return this.title;
   }
   GetTitle(): string {
     return this.title;
@@ -69,7 +100,7 @@ export class KalshiMarket implements IMarket {
     return this.ticker;
   }
   GetMarketType(): MarketType {
-    return MarketType.Kalshi;
+    return this.type;
   }
 }
 
@@ -88,6 +119,10 @@ export class KalshiMarketEntity {
   @Column('varchar')
   title!: string;
 
+  @Index()
+  @Column('varchar')
+  subtitle!: string;
+
   @Column('timestamptz')
   createdTime!: Date;
 
@@ -102,21 +137,67 @@ export class KalshiMarketEntity {
 
   @ManyToOne(() => KalshiEventEntity)
   @JoinColumn({ name: 'event_ticker', referencedColumnName: 'ticker' })
-  event!: Promise<KalshiEventEntity>;
+  event!: KalshiEventEntity;
+}
 
-  toModel(): KalshiMarket {
-    const model = new KalshiMarket();
-    model.ticker = this.ticker;
-    model.event_ticker = this.event_ticker;
-    model.title = this.title;
-    model.createdTime = this.createdTime;
-    model.closeTime = this.closeTime;
-    model.marketType = this.marketType;
-    model.closed = this.closed;
-    model.event = this.event?.then((event) => event?.toModel());
-
-    return model;
+export function modelFromKalshiMarketEntity(
+  entity: KalshiMarketEntity,
+): KalshiMarket | undefined {
+  if (!entity) {
+    return undefined;
   }
+  const model = new KalshiMarket();
+  model.type = MarketType.Kalshi;
+
+  model.ticker = entity.ticker;
+  model.event_ticker = entity.event_ticker;
+  model.title = entity.title;
+  model.subtitle = entity.subtitle;
+  model.createdTime = entity.createdTime;
+  model.closeTime = entity.closeTime;
+  model.marketType = entity.marketType;
+  model.closed = entity.closed;
+  if (entity.event) {
+    model.event = modelFromKalshiEventEntity(entity.event);
+  }
+
+  return model;
+}
+
+export class KalshiMarketDTO {
+  ticker!: string;
+  event_ticker!: string;
+  title!: string;
+  subtitle!: string;
+  createdTime!: string;
+  closeTime!: string;
+  marketType!: string;
+  closed!: boolean;
+  event!: KalshiEventDTO;
+}
+
+export function modelFromKalshiMarketDTO(
+  dto: KalshiMarketDTO,
+): KalshiMarket | undefined {
+  if (!dto) {
+    return undefined;
+  }
+  const model = new KalshiMarket();
+  model.type = MarketType.Kalshi;
+
+  model.ticker = dto.ticker;
+  model.event_ticker = dto.event_ticker;
+  model.title = dto.title;
+  model.subtitle = dto.subtitle;
+  model.createdTime = new Date(dto.createdTime);
+  model.closeTime = new Date(dto.closeTime);
+  model.marketType = dto.marketType;
+  model.closed = dto.closed;
+  if (dto.event) {
+    model.event = modelFromKalshiEventDTO(dto.event);
+  }
+
+  return model;
 }
 
 @Entity('kalshi_clob_scaning_markets')

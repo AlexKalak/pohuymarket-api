@@ -1,8 +1,14 @@
-import { Args, createUnionType, Int, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  createUnionType,
+  Int,
+  Mutation,
+  Query,
+  Resolver,
+} from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
-import { OrdersMatchWhere } from 'src/models/ordersMatch.model';
 import { KalshiEvent } from '../events/kalshiEvent.model';
-import { EventWhere } from '../events/event.interface';
+import { EventWhere, LoadEventInput } from '../events/event.interface';
 import { PolymarketEvent } from '../events/polymarketEvent.model';
 import { EventService } from '../events/event.service';
 
@@ -15,9 +21,36 @@ const EventsUnion = createUnionType({
 export class GQLEventResolver {
   constructor(private readonly eventService: EventService) {}
 
+  @Mutation(() => [EventsUnion])
+  async loadEvents(
+    @Args('events', { type: () => [LoadEventInput], nullable: true })
+    loadEventEntities?: LoadEventInput[],
+  ): Promise<Array<typeof EventsUnion>> {
+    if (!loadEventEntities || !loadEventEntities.length) {
+      throw new GraphQLError('invalid events');
+    }
+
+    for (const event of loadEventEntities) {
+      if (event.ticker) {
+        event.ticker = event.ticker.toUpperCase();
+      }
+    }
+
+    const eventsResult = await this.eventService.merge({
+      events: loadEventEntities,
+    });
+
+    if (!eventsResult.ok) {
+      throw new GraphQLError(eventsResult.error);
+    }
+    console.log(eventsResult.value);
+
+    return eventsResult.value;
+  }
+
   @Query(() => [EventsUnion])
   async events(
-    @Args('where', { type: () => OrdersMatchWhere, nullable: true })
+    @Args('where', { type: () => EventWhere, nullable: true })
     where?: EventWhere,
     @Args('first', { type: () => Int, nullable: true })
     first: number = 1000,
