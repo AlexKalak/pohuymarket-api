@@ -38,6 +38,9 @@ export class ArbitrageService {
     if (!where) {
       return this.arbitragePairsRepository
         .find({
+          order: {
+            id: 'DESC',
+          },
           skip: skip,
           take: first,
           relations: ['polymarketMarket', 'kalshiMarket'],
@@ -56,6 +59,7 @@ export class ArbitrageService {
     this.gqlWhereParsingService.parse(queryBuilder, where, metadata);
 
     const arbitragePairsEntities = await queryBuilder
+      .orderBy('arbitragePairs.id', 'DESC')
       .take(first)
       .skip(skip)
       .getMany();
@@ -63,6 +67,14 @@ export class ArbitrageService {
     return arbitragePairsEntities.map((entity) =>
       modelFromArbitragePairEntity(entity),
     );
+  }
+
+  public async deleteArbitrages({ ids }: { ids: number[] }): Promise<boolean> {
+    const result = await this.arbitragePairsRepository.delete(ids);
+    if (result.affected) {
+      return true;
+    }
+    return false;
   }
 
   public async createArbitragePairs(

@@ -4,6 +4,7 @@ import {
   InputType,
   Int,
   Mutation,
+  ObjectType,
   Query,
   Resolver,
 } from '@nestjs/graphql';
@@ -22,9 +23,31 @@ class CreateArbitragePairInput {
   kalshiMarketTicker: string;
 }
 
+@ObjectType()
+class DeleteArbitragesReponse {
+  @Field(() => Boolean)
+  ok: boolean;
+}
+
 @Resolver()
 export class GQLArbitrageResolver {
   constructor(private readonly arbitrageService: ArbitrageService) {}
+
+  @Mutation(() => DeleteArbitragesReponse)
+  async deleteArbitragePairs(
+    @Args('ids', { type: () => [Int], nullable: true })
+    ids: number[] = [],
+  ): Promise<DeleteArbitragesReponse> {
+    const ok = await this.arbitrageService.deleteArbitrages({ ids });
+
+    if (!ok) {
+      throw new GraphQLError('Not found arbitrage pair ids');
+    }
+
+    return {
+      ok: true,
+    };
+  }
 
   @Mutation(() => [ArbitragePair])
   async createArbitragePairs(

@@ -70,20 +70,20 @@ export class ArbitragePairEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @PrimaryColumn('int')
-  polymarketMarketID!: number;
-
   @CreateDateColumn()
   createdAt!: Date; // auto-set on INSERT
 
   @UpdateDateColumn()
   updatedAt!: Date; // auto-set on UPDATE
 
+  @Column('int')
+  polymarketMarketID!: number;
+
   @ManyToOne(() => PolymarketMarketEntity)
   @JoinColumn({ name: 'polymarketMarketID', referencedColumnName: 'id' })
   polymarketMarket!: PolymarketMarketEntity;
 
-  @PrimaryColumn('varchar')
+  @Column('varchar')
   kalshiMarketTicker!: string;
 
   @ManyToOne(() => KalshiMarketEntity)

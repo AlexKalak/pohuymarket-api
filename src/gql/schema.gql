@@ -35,6 +35,10 @@ input CreateArbitragePairInput {
 
 scalar DateScalar
 
+type DeleteArbitragesReponse {
+  ok: Boolean!
+}
+
 input EventWhere {
   identificator: String
 }
@@ -79,6 +83,7 @@ input MarketWhere {
 
 type Mutation {
   createArbitragePairs(pairs: [CreateArbitragePairInput!]): [ArbitragePair!]!
+  deleteArbitragePairs(ids: [Int!]): DeleteArbitragesReponse!
   loadEvents(events: [LoadEventInput!]): [EventsUnion!]!
 }
 
