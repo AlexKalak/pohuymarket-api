@@ -3,18 +3,20 @@
 # ------------------------------------------------------
 
 type ArbitragePair {
+  allowTrading: Boolean
   createdAt: DateScalar
   id: Int
   kalshiMarket: KalshiMarket
   kalshiMarketTicker: String
   polymarketMarket: PolymarketMarket
   polymarketMarketID: Int
+  revertPolymarket: Boolean
   updatedAt: DateScalar
 }
 
 input ArbitragePairWhere {
   id: Float
-  kalshiMarketTikcer: String
+  kalshiMarketTicker: String
   polymarketMarketID: Float
 }
 
@@ -26,11 +28,17 @@ type BidAskUpdate {
   timestamp: String
 }
 
+input BidAskUpdateWhere {
+  marketIdentificator: String
+  timestamp_gt: String
+}
+
 scalar BigInt
 
 input CreateArbitragePairInput {
   kalshiMarketTicker: String!
   polymarketMarketID: Float!
+  revertPolymarket: Boolean!
 }
 
 scalar DateScalar
@@ -85,6 +93,7 @@ type Mutation {
   createArbitragePairs(pairs: [CreateArbitragePairInput!]): [ArbitragePair!]!
   deleteArbitragePairs(ids: [Int!]): DeleteArbitragesReponse!
   loadEvents(events: [LoadEventInput!]): [EventsUnion!]!
+  setAllowTrading(allow: Boolean!, id: Int!): SetAllowTradingForArbPairResponse!
 }
 
 type Order {
@@ -158,10 +167,16 @@ type PolymarketMarket {
 
 type Query {
   arbitragePairs(first: Int, skip: Int, where: ArbitragePairWhere): [ArbitragePair!]!
+  bestBidAskUpdates(first: Int, fromHead: Boolean, skip: Int, where: BidAskUpdateWhere): [BidAskUpdate!]!
   events(first: Int, skip: Int, where: EventWhere): [EventsUnion!]!
+  marketByIdentificator(identificator: String): MarketUnion!
   markets(first: Int, skip: Int, where: MarketWhere): [MarketUnion!]!
   marketsByText(first: Int, skip: Int, text: String): MarketByTextResponse!
   ordersMatches(first: Int, fromHead: Boolean, skip: Int, where: OrdersMatchWhere): [OrdersMatch!]!
+}
+
+type SetAllowTradingForArbPairResponse {
+  ok: Boolean!
 }
 
 type Subscription {

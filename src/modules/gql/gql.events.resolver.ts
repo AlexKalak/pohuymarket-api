@@ -11,6 +11,7 @@ import { KalshiEvent } from '../events/kalshiEvent.model';
 import { EventWhere, LoadEventInput } from '../events/event.interface';
 import { PolymarketEvent } from '../events/polymarketEvent.model';
 import { EventService } from '../events/event.service';
+import { plainToInstance } from 'class-transformer';
 
 const EventsUnion = createUnionType({
   name: 'EventsUnion',
@@ -51,7 +52,7 @@ export class GQLEventResolver {
   @Query(() => [EventsUnion])
   async events(
     @Args('where', { type: () => EventWhere, nullable: true })
-    where?: EventWhere,
+    wherePlain?: EventWhere,
     @Args('first', { type: () => Int, nullable: true })
     first: number = 1000,
     @Args('skip', { type: () => Int, nullable: true })
@@ -65,6 +66,7 @@ export class GQLEventResolver {
         },
       });
     }
+    const where = plainToInstance(EventWhere, wherePlain);
 
     const events = await this.eventService.find({
       first,

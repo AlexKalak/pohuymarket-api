@@ -14,6 +14,7 @@ import {
   ArbitragePair,
   ArbitragePairWhere,
 } from '../arbitrage/arbitragePairs.model';
+import { plainToInstance } from 'class-transformer';
 
 @InputType()
 class CreateArbitragePairInput {
@@ -21,10 +22,17 @@ class CreateArbitragePairInput {
   polymarketMarketID: number;
   @Field({ nullable: false })
   kalshiMarketTicker: string;
+  @Field({ nullable: false })
+  revertPolymarket: boolean;
 }
 
 @ObjectType()
 class DeleteArbitragesReponse {
+  @Field(() => Boolean)
+  ok: boolean;
+}
+@ObjectType()
+class SetAllowTradingForArbPairResponse {
   @Field(() => Boolean)
   ok: boolean;
 }
@@ -49,6 +57,27 @@ export class GQLArbitrageResolver {
     };
   }
 
+  @Mutation(() => SetAllowTradingForArbPairResponse)
+  async setAllowTrading(
+    @Args('id', { type: () => Int, nullable: false })
+    id: number,
+    @Args('allow', { type: () => Boolean, nullable: false })
+    allow: boolean,
+  ): Promise<DeleteArbitragesReponse> {
+    const ok = await this.arbitrageService.setAllowTradingForPair({
+      id,
+      allow,
+    });
+
+    if (!ok) {
+      throw new GraphQLError('Unable to update allow trading');
+    }
+
+    return {
+      ok: true,
+    };
+  }
+
   @Mutation(() => [ArbitragePair])
   async createArbitragePairs(
     @Args('pairs', { type: () => [CreateArbitragePairInput], nullable: true })
@@ -66,7 +95,7 @@ export class GQLArbitrageResolver {
   @Query(() => [ArbitragePair])
   async arbitragePairs(
     @Args('where', { type: () => ArbitragePairWhere, nullable: true })
-    where?: ArbitragePairWhere,
+    wherePlain?: ArbitragePairWhere,
     @Args('first', { type: () => Int, nullable: true })
     first: number = 1000,
     @Args('skip', { type: () => Int, nullable: true })
@@ -81,12 +110,14 @@ export class GQLArbitrageResolver {
       });
     }
 
-    const markets = await this.arbitrageService.find({
+    const where = plainToInstance(ArbitragePairWhere, wherePlain);
+
+    const pairs = await this.arbitrageService.find({
       first,
       skip,
       where,
     });
 
-    return markets;
+    return pairs;
   }
 }

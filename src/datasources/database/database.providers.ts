@@ -1,4 +1,5 @@
 import { Provider } from '@nestjs/common';
+import { BidAskUpdateEntity } from 'src/models/bidAskUpdate.model';
 import { OrdersMatch } from 'src/models/ordersMatch.model';
 import { ArbitragePairEntity } from 'src/modules/arbitrage/arbitragePairs.model';
 import { KalshiEventEntity } from 'src/modules/events/kalshiEvent.model';
@@ -25,6 +26,7 @@ export const databaseProviders: Provider[] = [
           KalshiEventEntity,
           KalshiMarketEntity,
           ArbitragePairEntity,
+          BidAskUpdateEntity,
         ],
         synchronize: false, // ❌ very important, don’t let TypeORM change schema
       });

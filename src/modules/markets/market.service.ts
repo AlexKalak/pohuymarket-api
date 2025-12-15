@@ -4,7 +4,6 @@ import {
   KalshiMarket,
   KalshiMarketEntity,
   KalshiMarketWhere,
-  modelFromKalshiMarketDTO,
   modelFromKalshiMarketEntity,
 } from './kalshiMarket.model';
 import {
@@ -137,8 +136,8 @@ export class MarketService {
         kalshiMarketsPromise,
       ]);
 
-      console.log('pol:', polymarketMarkets?.length);
-      console.log('kal:', kalshiMarkets?.length);
+      console.log('pol:', polymarketMarkets);
+      console.log('kal:', kalshiMarkets);
 
       return [...polymarketMarkets, ...kalshiMarkets];
     }
@@ -162,8 +161,8 @@ export class MarketService {
       polymarketMarketsPromise,
       kalshiMarketsPromise,
     ]);
-    console.log('pol:', polymarketMarkets?.length);
-    console.log('kal:', kalshiMarkets?.length);
+    console.log('pol:', polymarketMarkets);
+    console.log('kal:', kalshiMarkets);
 
     return [...polymarketMarkets, ...kalshiMarkets];
   }

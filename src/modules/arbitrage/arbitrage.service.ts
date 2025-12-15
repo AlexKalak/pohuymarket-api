@@ -19,6 +19,7 @@ type FindArbitragePairsProps = {
 type CreatingPair = {
   polymarketMarketID: number;
   kalshiMarketTicker: string;
+  revertPolymarket: boolean;
 };
 
 @Injectable()
@@ -71,6 +72,28 @@ export class ArbitrageService {
 
   public async deleteArbitrages({ ids }: { ids: number[] }): Promise<boolean> {
     const result = await this.arbitragePairsRepository.delete(ids);
+    if (result.affected) {
+      return true;
+    }
+    return false;
+  }
+
+  public async setAllowTradingForPair({
+    id,
+    allow,
+  }: {
+    id: number;
+    allow: boolean;
+  }): Promise<boolean> {
+    const result = await this.arbitragePairsRepository.update(
+      {
+        id: id,
+      },
+      {
+        allowTrading: allow,
+      },
+    );
+
     if (result.affected) {
       return true;
     }

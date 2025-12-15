@@ -36,8 +36,8 @@ export class PolymarketMarketWhere {
       return;
     }
 
-    if (Number(marketWhere.identificator)) {
-      this.id = Number(marketWhere.identificator);
+    if (marketWhere.identificator && !isNaN(+marketWhere.identificator)) {
+      this.id = +marketWhere.identificator;
     }
   }
 }

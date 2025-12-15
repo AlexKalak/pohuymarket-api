@@ -12,6 +12,7 @@ import { PolymarketMarket } from '../markets/polymarketMarket.model';
 import { KalshiMarket } from '../markets/kalshiMarket.model';
 import { MarketWhere } from '../markets/market.interface';
 import { MarketService } from '../markets/market.service';
+import { plainToInstance } from 'class-transformer';
 
 const MarketsUnion = createUnionType({
   name: 'MarketUnion',
@@ -73,10 +74,38 @@ export class GQLMarketResolver {
     };
   }
 
+  @Query(() => MarketsUnion)
+  async marketByIdentificator(
+    @Args('identificator', { type: () => String, nullable: true })
+    identificator?: string,
+  ): Promise<PolymarketMarket | KalshiMarket | null> {
+    if (!identificator) {
+      return null;
+    }
+
+    if (!isNaN(+identificator)) {
+      const polymarketMarketResult =
+        await this.marketService.findPolymarketMarketByID(+identificator);
+      if (!polymarketMarketResult.ok) {
+        return null;
+      }
+      return polymarketMarketResult.value;
+    } else {
+      const kalshiMarketResult =
+        await this.marketService.findKalshiMarketByTicker(identificator);
+
+      if (!kalshiMarketResult.ok) {
+        return null;
+      }
+
+      return kalshiMarketResult.value;
+    }
+  }
+
   @Query(() => [MarketsUnion])
   async markets(
     @Args('where', { type: () => MarketWhere, nullable: true })
-    where?: MarketWhere,
+    wherePlain?: MarketWhere,
     @Args('first', { type: () => Int, nullable: true })
     first: number = 1000,
     @Args('skip', { type: () => Int, nullable: true })
@@ -90,6 +119,7 @@ export class GQLMarketResolver {
         },
       });
     }
+    const where = plainToInstance(MarketWhere, wherePlain);
 
     const markets = await this.marketService.find({
       first,

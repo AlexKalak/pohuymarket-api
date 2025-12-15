@@ -5,7 +5,6 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
-  PrimaryColumn,
   PrimaryGeneratedColumn,
   Unique,
   UpdateDateColumn,
@@ -36,7 +35,7 @@ export class ArbitragePairWhere {
 
   @Field({ nullable: true })
   @StraightParsable()
-  kalshiMarketTikcer?: string;
+  kalshiMarketTicker?: string;
 }
 
 @ObjectType()
@@ -45,7 +44,10 @@ export class ArbitragePair {
   id: number;
 
   @Field(() => Int, { nullable: true })
-  polymarketMarketID!: number;
+  polymarketMarketID: number;
+
+  @Field(() => Boolean, { nullable: true })
+  revertPolymarket: boolean;
 
   @Field(() => DateScalar, { nullable: true })
   createdAt: Date; // auto-set on INSERT
@@ -61,10 +63,13 @@ export class ArbitragePair {
 
   @Field(() => KalshiMarket, { nullable: true })
   kalshiMarket: KalshiMarket;
+
+  @Field(() => Boolean, { nullable: true })
+  allowTrading!: boolean;
 }
 
 @Entity('arbitrage_pairs')
-@Unique(['polymarketMarketID', 'kalshiMarketTicker'])
+@Unique(['polymarketMarketID', 'kalshiMarketTicker', 'revertPolymarket'])
 export class ArbitragePairEntity {
   @Index()
   @PrimaryGeneratedColumn()
@@ -79,6 +84,9 @@ export class ArbitragePairEntity {
   @Column('int')
   polymarketMarketID!: number;
 
+  @Column('boolean')
+  revertPolymarket!: boolean;
+
   @ManyToOne(() => PolymarketMarketEntity)
   @JoinColumn({ name: 'polymarketMarketID', referencedColumnName: 'id' })
   polymarketMarket!: PolymarketMarketEntity;
@@ -89,6 +97,9 @@ export class ArbitragePairEntity {
   @ManyToOne(() => KalshiMarketEntity)
   @JoinColumn({ name: 'kalshiMarketTicker', referencedColumnName: 'ticker' })
   kalshiMarket!: KalshiMarketEntity;
+
+  @Column('boolean', { default: false })
+  allowTrading!: boolean;
 }
 
 export function modelFromArbitragePairEntity(
@@ -98,9 +109,10 @@ export function modelFromArbitragePairEntity(
   model.id = entity.id;
   model.polymarketMarketID = entity.polymarketMarketID;
   model.kalshiMarketTicker = entity.kalshiMarketTicker;
+  model.revertPolymarket = entity.revertPolymarket;
   model.createdAt = entity.createdAt;
   model.updatedAt = entity.updatedAt;
-
+  model.allowTrading = entity.allowTrading;
   const polymarketMarket = modelFromPolymarketMarketEntity(
     entity.polymarketMarket,
   );

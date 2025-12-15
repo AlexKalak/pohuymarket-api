@@ -29,6 +29,7 @@
     "@nestjs/graphql": "^13.2.0",
     "@nestjs/microservices": "^11.1.9",
     "@nestjs/platform-express": "^11.0.1",
+    "class-transformer": "^0.5.1",
     "graphql": "^16.12.0",
     "graphql-subscriptions": "^3.0.0",
     "graphql-ws": "^6.0.6",
