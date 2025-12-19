@@ -69,7 +69,7 @@ export class ArbitragePair {
 }
 
 @Entity('arbitrage_pairs')
-@Unique(['polymarketMarketID', 'kalshiMarketTicker', 'revertPolymarket'])
+@Unique(['polymarketMarketID', 'kalshiMarketTicker'])
 export class ArbitragePairEntity {
   @Index()
   @PrimaryGeneratedColumn()

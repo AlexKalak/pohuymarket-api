@@ -89,15 +89,18 @@ export class MarketService {
       .addSelect(
         `
       CASE
-          WHEN market.title = :search THEN 3
-          WHEN market.title ILIKE :prefix THEN 2
-          WHEN market.title % :search THEN 1
+          WHEN CONCAT(market.title,market.custom) = :search THEN 3
+          WHEN CONCAT(market.title,market.custom) ILIKE :prefix THEN 2
+          WHEN CONCAT(market.title,market.custom) % :search THEN 1
           ELSE 0
       END
   `,
         'match_rank',
       )
-      .addSelect(`similarity(market.title, :search)`, 'similarity_score')
+      .addSelect(
+        `similarity(CONCAT(market.title,market.custom), :search)`,
+        'similarity_score',
+      )
       .setParameters({
         search: title,
         prefix: `${title}%`,

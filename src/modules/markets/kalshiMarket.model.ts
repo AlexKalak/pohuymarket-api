@@ -67,6 +67,15 @@ export class KalshiMarket implements IMarket {
   closeTime!: Date;
 
   @Field(() => String, { nullable: true })
+  yesSubtitle!: string;
+
+  @Field(() => String, { nullable: true })
+  noSubtitle!: string;
+
+  @Field(() => String, { nullable: true })
+  custom!: string;
+
+  @Field(() => String, { nullable: true })
   marketType!: string;
 
   @Field(() => Boolean, { nullable: true })
@@ -123,6 +132,15 @@ export class KalshiMarketEntity {
   @Column('varchar')
   subtitle!: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  yesSubtitle!: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  noSubtitle!: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  custom!: string;
+
   @Column('timestamptz')
   createdTime!: Date;
 
@@ -153,6 +171,11 @@ export function modelFromKalshiMarketEntity(
   model.event_ticker = entity.event_ticker;
   model.title = entity.title;
   model.subtitle = entity.subtitle;
+
+  model.yesSubtitle = entity.yesSubtitle;
+  model.noSubtitle = entity.noSubtitle;
+  model.custom = entity.custom;
+
   model.createdTime = entity.createdTime;
   model.closeTime = entity.closeTime;
   model.marketType = entity.marketType;
@@ -174,6 +197,9 @@ export class KalshiMarketDTO {
   marketType!: string;
   closed!: boolean;
   event!: KalshiEventDTO;
+  yesSubtitle!: string;
+  noSubtitle!: string;
+  custom!: string;
 }
 
 export function modelFromKalshiMarketDTO(
@@ -190,6 +216,11 @@ export function modelFromKalshiMarketDTO(
   model.title = dto.title;
   model.subtitle = dto.subtitle;
   model.createdTime = new Date(dto.createdTime);
+
+  model.yesSubtitle = dto.yesSubtitle;
+  model.noSubtitle = dto.noSubtitle;
+  model.custom = dto.custom;
+
   model.closeTime = new Date(dto.closeTime);
   model.marketType = dto.marketType;
   model.closed = dto.closed;

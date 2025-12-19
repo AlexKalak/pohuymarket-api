@@ -63,13 +63,16 @@ type KalshiMarket {
   closeTime: DateScalar
   closed: Boolean
   createdTime: DateScalar
+  custom: String
   event: KalshiEvent
   event_ticker: String
   marketType: String
+  noSubtitle: String
   subtitle: String
   ticker: String
   title: String
   type: String
+  yesSubtitle: String
 }
 
 input LoadEventInput {
