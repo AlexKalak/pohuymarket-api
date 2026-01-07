@@ -1,8 +1,10 @@
 import {
   Args,
   createUnionType,
+  Field,
   Int,
   Mutation,
+  ObjectType,
   Query,
   Resolver,
 } from '@nestjs/graphql';
@@ -17,6 +19,14 @@ const EventsUnion = createUnionType({
   name: 'EventsUnion',
   types: () => [PolymarketEvent, KalshiEvent] as const,
 });
+
+@ObjectType()
+class EventsByTextResponse {
+  @Field(() => [PolymarketEvent])
+  polymarket: PolymarketEvent[];
+  @Field(() => [KalshiEvent])
+  kalshi: KalshiEvent[];
+}
 
 @Resolver()
 export class GQLEventResolver {
@@ -47,6 +57,49 @@ export class GQLEventResolver {
     console.log(eventsResult.value);
 
     return eventsResult.value;
+  }
+
+  @Query(() => EventsByTextResponse)
+  async eventsByText(
+    @Args('text', { type: () => String, nullable: true })
+    text?: string,
+    @Args('first', { type: () => Int, nullable: true })
+    first: number = 100,
+    @Args('skip', { type: () => Int, nullable: true })
+    skip: number = 0,
+  ): Promise<EventsByTextResponse> {
+    if (first > 100) {
+      throw new GraphQLError('Too many entities requested', {
+        extensions: {
+          code: 'TOO_MANY_ENTITIES',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
+
+    if (!text || text.length < 3) {
+      return {
+        polymarket: [],
+        kalshi: [],
+      };
+    }
+
+    const polymarketEvents = await this.eventService.findByTitlePolymarket({
+      first,
+      skip,
+      title: text,
+    });
+
+    const kalshiEvents = await this.eventService.findByTitleKalshi({
+      first,
+      skip,
+      title: text,
+    });
+
+    return {
+      polymarket: polymarketEvents,
+      kalshi: kalshiEvents,
+    };
   }
 
   @Query(() => [EventsUnion])

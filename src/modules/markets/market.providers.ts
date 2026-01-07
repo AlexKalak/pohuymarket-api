@@ -1,6 +1,12 @@
 import { DataSource } from 'typeorm';
-import { PolymarketMarketEntity } from './polymarketMarket.model';
-import { KalshiMarketEntity } from './kalshiMarket.model';
+import {
+  PolymarketMarketEntity,
+  PolymarketUnloadedMarketEntity,
+} from './polymarketMarket.model';
+import {
+  KalshiMarketEntity,
+  KalshiUnloadedMarketEntity,
+} from './kalshiMarket.model';
 
 export const marketProviders = [
   {
@@ -10,9 +16,21 @@ export const marketProviders = [
     inject: ['DATA_SOURCE'],
   },
   {
+    provide: 'POLYMARKET_UNLOADED_MARKET_REPOSITORY',
+    useFactory: (dataSource: DataSource) =>
+      dataSource.getRepository(PolymarketUnloadedMarketEntity),
+    inject: ['DATA_SOURCE'],
+  },
+  {
     provide: 'KALSHI_MARKET_REPOSITORY',
     useFactory: (dataSource: DataSource) =>
       dataSource.getRepository(KalshiMarketEntity),
+    inject: ['DATA_SOURCE'],
+  },
+  {
+    provide: 'KALSHI_UNLOADED_MARKET_REPOSITORY',
+    useFactory: (dataSource: DataSource) =>
+      dataSource.getRepository(KalshiUnloadedMarketEntity),
     inject: ['DATA_SOURCE'],
   },
 ];

@@ -3,10 +3,12 @@ import { Repository } from 'typeorm';
 import {
   modelFromPolymarketEventDTO,
   modelFromPolymarketEventEntity,
+  modelFromUnloadedPolymarketEventEntity,
   PolymarketEvent,
   PolymarketEventDTO,
   PolymarketEventEntity,
   PolymarketEventWhere,
+  PolymarketUnloadedEventEntity,
 } from './polymarketEvent.model';
 import {
   KalshiEvent,
@@ -15,6 +17,8 @@ import {
   KalshiEventWhere,
   modelFromKalshiEventEntity,
   modelFromKalshiEventDTO,
+  KalshiUnloadedEventEntity,
+  modelFromUnloadedKalshiEventEntity,
 } from './kalshiEvent.model';
 import { GqlWhereParsingService } from 'src/datasources/database/gqlWhereParsing.service';
 import { EventType, EventWhere, LoadEventInput } from './event.interface';
@@ -46,6 +50,11 @@ export class EventService {
     @Inject('KALSHI_EVENT_REPOSITORY')
     private kalshiEventRepository: Repository<KalshiEventEntity>,
 
+    @Inject('POLYMARKET_UNLOADED_EVENT_REPOSITORY')
+    private polymarketUnloadedEventRepository: Repository<PolymarketUnloadedEventEntity>,
+    @Inject('KALSHI_UNLOADED_EVENT_REPOSITORY')
+    private kalshiUnloadedEventRepository: Repository<KalshiUnloadedEventEntity>,
+
     private gqlWhereParsingService: GqlWhereParsingService,
   ) {}
 
@@ -55,15 +64,20 @@ export class EventService {
     Result<(PolymarketEvent | KalshiEvent)[], string>
   > {
     console.log('Sending post to merging microservice...');
-    const resp = await fetch('http://localhost:1234/events/load', {
-      method: 'POST',
-      headers: {
-        'Content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        events,
-      }),
-    });
+    let resp: Response;
+    try {
+      resp = await fetch('http://localhost:1234/events/load', {
+        method: 'POST',
+        headers: {
+          'Content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          events,
+        }),
+      });
+    } catch (e) {
+      return Err(`${e}`);
+    }
 
     console.log(resp);
     if (!resp || !resp.ok) {
@@ -148,6 +162,88 @@ export class EventService {
     console.log('kal:', kalshiEvents?.length);
 
     return [...polymarketEvents, ...kalshiEvents];
+  }
+
+  async findByTitlePolymarket({
+    first,
+    skip,
+    title,
+  }: {
+    first: number;
+    skip: number;
+    title: string;
+  }): Promise<PolymarketEvent[]> {
+    const qb = this.polymarketUnloadedEventRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.markets', 'markets')
+      .addSelect(
+        `
+      CASE
+          WHEN event.title= :search THEN 3
+          WHEN event.title ILIKE :prefix THEN 2
+          WHEN event.title% :search THEN 1
+          ELSE 0
+      END
+  `,
+        'match_rank',
+      )
+      .addSelect(`similarity(event.title, :search)`, 'similarity_score')
+      .setParameters({
+        search: title,
+        prefix: `${title}%`,
+      })
+      .orderBy('match_rank', 'DESC')
+      .addOrderBy('similarity_score', 'DESC')
+      .take(first)
+      .skip(skip);
+
+    const results = await qb.getRawAndEntities();
+    const polymarketMarkets = results.entities
+      .map((entity) => modelFromUnloadedPolymarketEventEntity(entity))
+      .filter((market) => !!market);
+
+    return polymarketMarkets;
+  }
+
+  async findByTitleKalshi({
+    first,
+    skip,
+    title,
+  }: {
+    first: number;
+    skip: number;
+    title: string;
+  }): Promise<KalshiEvent[]> {
+    const qb = this.kalshiUnloadedEventRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.markets', 'markets')
+      .addSelect(
+        `
+      CASE
+          WHEN event.title = :search THEN 3
+          WHEN event.title ILIKE :prefix THEN 2
+          WHEN event.title % :search THEN 1
+          ELSE 0
+      END
+  `,
+        'match_rank',
+      )
+      .addSelect(`similarity(event.title, :search)`, 'similarity_score')
+      .setParameters({
+        search: title,
+        prefix: `${title}%`,
+      })
+      .orderBy('match_rank', 'DESC')
+      .addOrderBy('similarity_score', 'DESC')
+      .take(first)
+      .skip(skip);
+
+    const results = await qb.getRawAndEntities();
+    const kalshiMarkets = results.entities
+      .map((entity) => modelFromUnloadedKalshiEventEntity(entity))
+      .filter((market) => !!market);
+
+    return kalshiMarkets;
   }
 
   async findPolymarketEvent({

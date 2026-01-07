@@ -36,11 +36,11 @@ export class GQLMarketResolver {
     @Args('text', { type: () => String, nullable: true })
     text?: string,
     @Args('first', { type: () => Int, nullable: true })
-    first: number = 100,
+    first: number = 1000,
     @Args('skip', { type: () => Int, nullable: true })
     skip: number = 0,
   ): Promise<MarketByTextResponse> {
-    if (first > 100) {
+    if (first > 1000) {
       throw new GraphQLError('Too many entities requested', {
         extensions: {
           code: 'TOO_MANY_ENTITIES',

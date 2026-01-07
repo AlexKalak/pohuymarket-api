@@ -12,6 +12,7 @@ import {
   PolymarketMarket,
   PolymarketMarketDTO,
   PolymarketMarketEntity,
+  PolymarketUnloadedMarketEntity,
 } from '../markets/polymarketMarket.model';
 import { type IMarket } from '../markets/market.interface';
 import { EventType, EventWhere, IEvent } from './event.interface';
@@ -154,8 +155,89 @@ export class PolymarketEventEntity {
   markets!: PolymarketMarketEntity[];
 }
 
+@Entity('polymarket_unloaded_events')
+@Unique(['id'])
+export class PolymarketUnloadedEventEntity {
+  type: string = EventType.Polymarket;
+
+  @Index()
+  @PrimaryColumn('int')
+  id!: number;
+
+  @Index()
+  @Column('varchar')
+  slug!: string;
+
+  @Column('varchar')
+  title!: string;
+
+  @Column('varchar')
+  description!: string;
+
+  @Index()
+  @Column('timestamptz')
+  startDate!: Date;
+
+  @Index()
+  @Column('timestamptz')
+  endDate!: Date;
+
+  @Index()
+  @Column('varchar')
+  image!: string;
+
+  @Column({ type: 'varchar' })
+  icon!: string;
+
+  @Column({ type: 'boolean' })
+  negRisk!: boolean;
+
+  @Column({ type: 'varchar' })
+  negRiskMarketID!: string;
+
+  @Column({ type: 'boolean' })
+  active!: boolean;
+
+  @Column({ type: 'boolean' })
+  closed!: boolean;
+
+  @Column({ type: 'boolean' })
+  enableOrderBook!: boolean;
+
+  @OneToMany(() => PolymarketUnloadedMarketEntity, (market) => market.event)
+  markets!: PolymarketMarketEntity[];
+}
+
 export function modelFromPolymarketEventEntity(
   entity: PolymarketEventEntity,
+): PolymarketEvent {
+  console.log('entity', entity.title, entity.type);
+
+  const model = new PolymarketEvent();
+
+  model.id = entity.id;
+  model.slug = entity.slug;
+  model.title = entity.title;
+  model.description = entity.description;
+  model.startDate = entity.startDate;
+  model.endDate = entity.endDate;
+  model.image = entity.image;
+  model.icon = entity.icon;
+  model.negRisk = entity.negRisk;
+  model.negRiskMarketID = entity.negRiskMarketID;
+  model.active = entity.active;
+  model.closed = entity.closed;
+  model.enableOrderBook = entity.enableOrderBook;
+
+  model.markets = entity.markets
+    ?.map((marketEntity) => modelFromPolymarketMarketEntity(marketEntity))
+    .filter((market) => !!market);
+
+  return model;
+}
+
+export function modelFromUnloadedPolymarketEventEntity(
+  entity: PolymarketUnloadedEventEntity,
 ): PolymarketEvent {
   console.log('entity', entity.title, entity.type);
 

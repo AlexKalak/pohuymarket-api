@@ -11,6 +11,7 @@ import {
   KalshiMarket,
   KalshiMarketDTO,
   KalshiMarketEntity,
+  KalshiUnloadedMarketEntity,
   modelFromKalshiMarketDTO,
   modelFromKalshiMarketEntity,
 } from '../markets/kalshiMarket.model';
@@ -80,8 +81,37 @@ export class KalshiEventEntity {
   markets!: KalshiMarketEntity[];
 }
 
+@Entity('kalshi_unloaded_events')
+@Unique(['ticker'])
+export class KalshiUnloadedEventEntity {
+  type: string = EventType.Kalshi;
+
+  @Index()
+  @PrimaryColumn('varchar')
+  ticker!: string;
+
+  @Column('varchar')
+  title!: string;
+
+  @OneToMany(() => KalshiUnloadedMarketEntity, (market) => market.event)
+  markets!: KalshiUnloadedMarketEntity[];
+}
+
 export function modelFromKalshiEventEntity(
   entity: KalshiEventEntity,
+): KalshiEvent {
+  const model = new KalshiEvent();
+  model.ticker = entity.ticker;
+  model.title = entity.title;
+  model.markets = entity.markets
+    ?.map((marketEntity) => modelFromKalshiMarketEntity(marketEntity))
+    .filter((market) => !!market);
+
+  return model;
+}
+
+export function modelFromUnloadedKalshiEventEntity(
+  entity: KalshiUnloadedEventEntity,
 ): KalshiEvent {
   const model = new KalshiEvent();
   model.ticker = entity.ticker;

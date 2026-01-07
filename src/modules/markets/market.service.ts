@@ -4,13 +4,17 @@ import {
   KalshiMarket,
   KalshiMarketEntity,
   KalshiMarketWhere,
+  KalshiUnloadedMarketEntity,
   modelFromKalshiMarketEntity,
+  modelFromUnloadedKalshiMarketEntity,
 } from './kalshiMarket.model';
 import {
   modelFromPolymarketMarketEntity,
+  modelFromUnloadedPolymarketMarketEntity,
   PolymarketMarket,
   PolymarketMarketEntity,
   PolymarketMarketWhere,
+  PolymarketUnloadedMarketEntity,
 } from './polymarketMarket.model';
 import { GqlWhereParsingService } from 'src/datasources/database/gqlWhereParsing.service';
 import { MarketWhere } from './market.interface';
@@ -27,8 +31,12 @@ export class MarketService {
   constructor(
     @Inject('POLYMARKET_MARKET_REPOSITORY')
     private polymarketMarketRepository: Repository<PolymarketMarketEntity>,
+    @Inject('POLYMARKET_UNLOADED_MARKET_REPOSITORY')
+    private polymarketUnloadedMarketRepository: Repository<PolymarketUnloadedMarketEntity>,
     @Inject('KALSHI_MARKET_REPOSITORY')
     private kalshiMarketRepository: Repository<KalshiMarketEntity>,
+    @Inject('KALSHI_UNLOADED_MARKET_REPOSITORY')
+    private kalshiUnloadedMarketRepository: Repository<KalshiUnloadedMarketEntity>,
     @Inject('DATA_SOURCE')
     private dataSource: DataSource,
 
@@ -44,8 +52,9 @@ export class MarketService {
     skip: number;
     title: string;
   }): Promise<PolymarketMarket[]> {
-    const qb = this.polymarketMarketRepository
+    const qb = this.polymarketUnloadedMarketRepository
       .createQueryBuilder('market')
+      .leftJoinAndSelect('market.event', 'event')
       .addSelect(
         `
       CASE
@@ -69,7 +78,7 @@ export class MarketService {
 
     const results = await qb.getRawAndEntities();
     const polymarketMarkets = results.entities
-      .map((entity) => modelFromPolymarketMarketEntity(entity))
+      .map((entity) => modelFromUnloadedPolymarketMarketEntity(entity))
       .filter((market) => !!market);
 
     return polymarketMarkets;
@@ -84,7 +93,7 @@ export class MarketService {
     skip: number;
     title: string;
   }): Promise<KalshiMarket[]> {
-    const qb = this.kalshiMarketRepository
+    const qb = this.kalshiUnloadedMarketRepository
       .createQueryBuilder('market')
       .addSelect(
         `
@@ -112,7 +121,7 @@ export class MarketService {
 
     const results = await qb.getRawAndEntities();
     const kalshiMarkets = results.entities
-      .map((entity) => modelFromKalshiMarketEntity(entity))
+      .map((entity) => modelFromUnloadedKalshiMarketEntity(entity))
       .filter((market) => !!market);
 
     return kalshiMarkets;

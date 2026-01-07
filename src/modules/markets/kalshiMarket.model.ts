@@ -16,6 +16,7 @@ import {
   KalshiEvent,
   KalshiEventDTO,
   KalshiEventEntity,
+  KalshiUnloadedEventEntity,
   modelFromKalshiEventDTO,
   modelFromKalshiEventEntity,
 } from '../events/kalshiEvent.model';
@@ -113,6 +114,51 @@ export class KalshiMarket implements IMarket {
   }
 }
 
+@Entity('kalshi_unloaded_markets')
+@Unique(['ticker'])
+export class KalshiUnloadedMarketEntity {
+  @Index()
+  @PrimaryColumn('varchar')
+  ticker!: string;
+
+  @Index()
+  @Column('varchar')
+  event_ticker!: string;
+
+  @Index()
+  @Column('varchar')
+  title!: string;
+
+  @Index()
+  @Column('varchar')
+  subtitle!: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  yesSubtitle!: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  noSubtitle!: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  custom!: string;
+
+  @Column('timestamptz')
+  createdTime!: Date;
+
+  @Column('timestamptz')
+  closeTime!: Date;
+
+  @Column({ type: 'varchar' })
+  marketType!: string;
+
+  @Column({ type: 'boolean' })
+  closed!: boolean;
+
+  @ManyToOne(() => KalshiEventEntity)
+  @JoinColumn({ name: 'event_ticker', referencedColumnName: 'ticker' })
+  event!: KalshiUnloadedEventEntity;
+}
+
 @Entity('kalshi_markets')
 @Unique(['ticker'])
 export class KalshiMarketEntity {
@@ -183,6 +229,32 @@ export function modelFromKalshiMarketEntity(
   if (entity.event) {
     model.event = modelFromKalshiEventEntity(entity.event);
   }
+
+  return model;
+}
+
+export function modelFromUnloadedKalshiMarketEntity(
+  entity: KalshiUnloadedMarketEntity,
+): KalshiMarket | undefined {
+  if (!entity) {
+    return undefined;
+  }
+  const model = new KalshiMarket();
+  model.type = MarketType.Kalshi;
+
+  model.ticker = entity.ticker;
+  model.event_ticker = entity.event_ticker;
+  model.title = entity.title;
+  model.subtitle = entity.subtitle;
+
+  model.yesSubtitle = entity.yesSubtitle;
+  model.noSubtitle = entity.noSubtitle;
+  model.custom = entity.custom;
+
+  model.createdTime = entity.createdTime;
+  model.closeTime = entity.closeTime;
+  model.marketType = entity.marketType;
+  model.closed = entity.closed;
 
   return model;
 }

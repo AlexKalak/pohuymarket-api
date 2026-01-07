@@ -2,10 +2,22 @@ import { Provider } from '@nestjs/common';
 import { BidAskUpdateEntity } from 'src/models/bidAskUpdate.model';
 import { OrdersMatch } from 'src/models/ordersMatch.model';
 import { ArbitragePairEntity } from 'src/modules/arbitrage/arbitragePairs.model';
-import { KalshiEventEntity } from 'src/modules/events/kalshiEvent.model';
-import { PolymarketEventEntity } from 'src/modules/events/polymarketEvent.model';
-import { KalshiMarketEntity } from 'src/modules/markets/kalshiMarket.model';
-import { PolymarketMarketEntity } from 'src/modules/markets/polymarketMarket.model';
+import {
+  KalshiEventEntity,
+  KalshiUnloadedEventEntity,
+} from 'src/modules/events/kalshiEvent.model';
+import {
+  PolymarketEventEntity,
+  PolymarketUnloadedEventEntity,
+} from 'src/modules/events/polymarketEvent.model';
+import {
+  KalshiMarketEntity,
+  KalshiUnloadedMarketEntity,
+} from 'src/modules/markets/kalshiMarket.model';
+import {
+  PolymarketMarketEntity,
+  PolymarketUnloadedMarketEntity,
+} from 'src/modules/markets/polymarketMarket.model';
 import { DataSource } from 'typeorm';
 
 export const databaseProviders: Provider[] = [
@@ -21,10 +33,14 @@ export const databaseProviders: Provider[] = [
         database: 'pohuymarket',
         entities: [
           OrdersMatch,
+          PolymarketUnloadedEventEntity,
           PolymarketEventEntity,
+          PolymarketUnloadedMarketEntity,
           PolymarketMarketEntity,
+          KalshiUnloadedEventEntity,
           KalshiEventEntity,
           KalshiMarketEntity,
+          KalshiUnloadedMarketEntity,
           ArbitragePairEntity,
           BidAskUpdateEntity,
         ],

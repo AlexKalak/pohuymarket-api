@@ -51,6 +51,11 @@ input EventWhere {
   identificator: String
 }
 
+type EventsByTextResponse {
+  kalshi: [KalshiEvent!]!
+  polymarket: [PolymarketEvent!]!
+}
+
 union EventsUnion = KalshiEvent | PolymarketEvent
 
 type KalshiEvent {
@@ -172,6 +177,7 @@ type Query {
   arbitragePairs(first: Int, skip: Int, where: ArbitragePairWhere): [ArbitragePair!]!
   bestBidAskUpdates(first: Int, fromHead: Boolean, skip: Int, where: BidAskUpdateWhere): [BidAskUpdate!]!
   events(first: Int, skip: Int, where: EventWhere): [EventsUnion!]!
+  eventsByText(first: Int, skip: Int, text: String): EventsByTextResponse!
   marketByIdentificator(identificator: String): MarketUnion!
   markets(first: Int, skip: Int, where: MarketWhere): [MarketUnion!]!
   marketsByText(first: Int, skip: Int, text: String): MarketByTextResponse!

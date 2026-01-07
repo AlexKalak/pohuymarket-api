@@ -20,6 +20,7 @@ import {
   PolymarketEvent,
   PolymarketEventDTO,
   PolymarketEventEntity,
+  PolymarketUnloadedEventEntity,
 } from '../events/polymarketEvent.model';
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { StraightParsable } from 'src/models/decorators';
@@ -188,8 +189,102 @@ export class PolymarketMarketEntity {
   event!: PolymarketEventEntity;
 }
 
+@Entity('polymarket_unloaded_markets')
+@Unique(['id'])
+export class PolymarketUnloadedMarketEntity {
+  @Index()
+  @PrimaryColumn('int')
+  id!: number;
+
+  @Index()
+  @PrimaryColumn('varchar')
+  conditionId!: string;
+
+  @Index()
+  @Column('int')
+  event_id!: number;
+
+  @Index()
+  @Column('varchar')
+  slug!: string;
+
+  @Column('varchar')
+  question!: string;
+
+  @Column('timestamptz')
+  startDate!: Date;
+
+  @Column('timestamptz')
+  endDate!: Date;
+
+  @Index()
+  @Column('varchar')
+  image!: string;
+
+  @Column({ type: 'varchar' })
+  icon!: string;
+
+  @Column({ type: 'varchar' })
+  yesAssetId!: string;
+
+  @Column({ type: 'varchar' })
+  noAssetId!: string;
+
+  @Column({ type: 'boolean' })
+  negRisk!: boolean;
+
+  @Column({ type: 'varchar' })
+  negRiskMarketID!: string;
+
+  @Column({ type: 'varchar' })
+  negRiskRequestID!: string;
+
+  @Column({ type: 'boolean' })
+  active!: boolean;
+
+  @Column({ type: 'boolean' })
+  closed!: boolean;
+
+  @ManyToOne(() => PolymarketUnloadedEventEntity)
+  @JoinColumn({ name: 'event_id', referencedColumnName: 'id' })
+  event!: PolymarketUnloadedEventEntity;
+}
+
 export function modelFromPolymarketMarketEntity(
   entity: PolymarketMarketEntity,
+): PolymarketMarket | undefined {
+  if (!entity) {
+    return undefined;
+  }
+  const model = new PolymarketMarket();
+  model.type = MarketType.Polymarket;
+
+  model.id = entity.id;
+  model.conditionId = entity.conditionId;
+  model.event_id = entity.event_id;
+  model.slug = entity.slug;
+  model.question = entity.question;
+  model.startDate = entity.startDate;
+  model.endDate = entity.endDate;
+  model.image = entity.image;
+  model.icon = entity.icon;
+  model.yesAssetId = entity.yesAssetId;
+  model.noAssetId = entity.noAssetId;
+  model.negRisk = entity.negRisk;
+  model.negRiskMarketID = entity.negRiskMarketID;
+  model.negRiskRequestID = entity.negRiskRequestID;
+  model.active = entity.active;
+  model.closed = entity.closed;
+
+  if (entity.event) {
+    model.event = modelFromPolymarketEventEntity(entity.event);
+  }
+
+  return model;
+}
+
+export function modelFromUnloadedPolymarketMarketEntity(
+  entity: PolymarketUnloadedMarketEntity,
 ): PolymarketMarket | undefined {
   if (!entity) {
     return undefined;

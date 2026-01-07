@@ -1,6 +1,12 @@
 import { DataSource } from 'typeorm';
-import { PolymarketEventEntity } from './polymarketEvent.model';
-import { KalshiEventEntity } from './kalshiEvent.model';
+import {
+  PolymarketEventEntity,
+  PolymarketUnloadedEventEntity,
+} from './polymarketEvent.model';
+import {
+  KalshiEventEntity,
+  KalshiUnloadedEventEntity,
+} from './kalshiEvent.model';
 
 export const eventProviders = [
   {
@@ -13,6 +19,18 @@ export const eventProviders = [
     provide: 'KALSHI_EVENT_REPOSITORY',
     useFactory: (dataSource: DataSource) =>
       dataSource.getRepository(KalshiEventEntity),
+    inject: ['DATA_SOURCE'],
+  },
+  {
+    provide: 'POLYMARKET_UNLOADED_EVENT_REPOSITORY',
+    useFactory: (dataSource: DataSource) =>
+      dataSource.getRepository(PolymarketUnloadedEventEntity),
+    inject: ['DATA_SOURCE'],
+  },
+  {
+    provide: 'KALSHI_UNLOADED_EVENT_REPOSITORY',
+    useFactory: (dataSource: DataSource) =>
+      dataSource.getRepository(KalshiUnloadedEventEntity),
     inject: ['DATA_SOURCE'],
   },
 ];
