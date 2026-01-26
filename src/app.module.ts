@@ -11,12 +11,14 @@ import { GQLModule } from './modules/gql/gql.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RedisModule } from './datasources/redis/redis.module';
 import { PubSubModule } from './events/pubSub.module';
+import { EventModule } from './modules/events/event.module';
 
 @Module({
   imports: [
     DatabaseModule,
     RedisModule,
     PubSubModule,
+    EventModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/gql/schema.gql'),

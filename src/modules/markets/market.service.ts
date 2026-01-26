@@ -52,7 +52,7 @@ export class MarketService {
     skip: number;
     title: string;
   }): Promise<PolymarketMarket[]> {
-    const qb = this.polymarketUnloadedMarketRepository
+    const qb = this.polymarketMarketRepository
       .createQueryBuilder('market')
       .leftJoinAndSelect('market.event', 'event')
       .addSelect(
@@ -78,7 +78,7 @@ export class MarketService {
 
     const results = await qb.getRawAndEntities();
     const polymarketMarkets = results.entities
-      .map((entity) => modelFromUnloadedPolymarketMarketEntity(entity))
+      .map((entity) => modelFromPolymarketMarketEntity(entity))
       .filter((market) => !!market);
 
     return polymarketMarkets;
@@ -93,7 +93,7 @@ export class MarketService {
     skip: number;
     title: string;
   }): Promise<KalshiMarket[]> {
-    const qb = this.kalshiUnloadedMarketRepository
+    const qb = this.kalshiMarketRepository
       .createQueryBuilder('market')
       .addSelect(
         `
@@ -121,7 +121,7 @@ export class MarketService {
 
     const results = await qb.getRawAndEntities();
     const kalshiMarkets = results.entities
-      .map((entity) => modelFromUnloadedKalshiMarketEntity(entity))
+      .map((entity) => modelFromKalshiMarketEntity(entity))
       .filter((market) => !!market);
 
     return kalshiMarkets;
