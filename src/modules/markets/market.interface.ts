@@ -5,6 +5,7 @@ import { StraightParsable } from 'src/models/decorators';
 export enum MarketType {
   Polymarket = 'polymarket',
   Kalshi = 'kalshi',
+  PredictFun = 'predictFun',
 }
 
 export function marketTypeFromString(marketType: string): MarketType {
@@ -13,6 +14,8 @@ export function marketTypeFromString(marketType: string): MarketType {
       return MarketType.Polymarket;
     case MarketType.Kalshi.toString():
       return MarketType.Kalshi;
+    case MarketType.PredictFun.toString():
+      return MarketType.PredictFun;
   }
 
   throw new Error('Unable to convert string to MarketType');
