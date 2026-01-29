@@ -29,7 +29,7 @@ export const databaseProviders: Provider[] = [
         host: 'localhost',
         port: 5432,
         username: 'postgres',
-        password: '12341234',
+        password: 'postgres',
         database: 'pohuymarket',
         entities: [
           OrdersMatch,
