@@ -19,11 +19,13 @@ import { plainToInstance } from 'class-transformer';
 @InputType()
 class CreateArbitragePairInput {
   @Field({ nullable: false })
-  polymarketMarketID: number;
+  marketType1: string;
   @Field({ nullable: false })
-  kalshiMarketTicker: string;
+  marketType2: string;
   @Field({ nullable: false })
-  revertPolymarket: boolean;
+  marketIdentificator1: string;
+  @Field({ nullable: false })
+  marketIdentificator2: string;
 }
 
 @ObjectType()
@@ -39,7 +41,7 @@ class SetAllowTradingForArbPairResponse {
 
 @Resolver()
 export class GQLArbitrageResolver {
-  constructor(private readonly arbitrageService: ArbitrageService) {}
+  constructor(private readonly arbitrageService: ArbitrageService) { }
 
   @Mutation(() => DeleteArbitragesReponse)
   async deleteArbitragePairs(

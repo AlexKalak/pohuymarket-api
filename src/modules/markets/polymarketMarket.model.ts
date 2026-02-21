@@ -48,14 +48,15 @@ export class PolymarketMarket implements IMarket {
   @Field(() => String, { nullable: true })
   type: MarketType;
 
-  @Field(() => Int, { nullable: true })
-  id!: number;
+  @Field(() => String, { nullable: true })
+  id!: string;
+
+  @Field(() => String, { nullable: true })
+  event_id!: string;
 
   @Field(() => String, { nullable: true })
   conditionId!: string;
 
-  @Field(() => Int, { nullable: true })
-  event_id!: number;
 
   @Field(() => String, { nullable: true })
   slug!: string;
@@ -259,9 +260,9 @@ export function modelFromPolymarketMarketEntity(
   const model = new PolymarketMarket();
   model.type = MarketType.Polymarket;
 
-  model.id = entity.id;
+  model.id = entity.id.toString();
   model.conditionId = entity.conditionId;
-  model.event_id = entity.event_id;
+  model.event_id = entity.event_id.toString();
   model.slug = entity.slug;
   model.question = entity.question;
   model.startDate = entity.startDate;
@@ -292,9 +293,9 @@ export function modelFromUnloadedPolymarketMarketEntity(
   const model = new PolymarketMarket();
   model.type = MarketType.Polymarket;
 
-  model.id = entity.id;
+  model.id = entity.id.toString();
   model.conditionId = entity.conditionId;
-  model.event_id = entity.event_id;
+  model.event_id = entity.event_id.toString();
   model.slug = entity.slug;
   model.question = entity.question;
   model.startDate = entity.startDate;
@@ -345,9 +346,9 @@ export function modelFromPolymarketMarketDTO(
   const model = new PolymarketMarket();
   model.type = MarketType.Polymarket;
 
-  model.id = entity.id;
+  model.id = entity.id.toString();
   model.conditionId = entity.conditionId;
-  model.event_id = entity.event_id;
+  model.event_id = entity.event_id.toString();
   model.slug = entity.slug;
   model.question = entity.question;
   model.startDate = new Date(entity.startDate);

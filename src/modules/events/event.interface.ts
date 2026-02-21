@@ -24,6 +24,7 @@ export class EventWhere {
 export enum EventType {
   Polymarket = 'polymarket',
   Kalshi = 'kalshi',
+  PredictFun = 'predictFun'
 }
 
 export interface IEvent {

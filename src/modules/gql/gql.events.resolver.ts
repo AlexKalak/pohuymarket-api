@@ -14,10 +14,11 @@ import { EventWhere, LoadEventInput } from '../events/event.interface';
 import { PolymarketEvent } from '../events/polymarketEvent.model';
 import { EventService } from '../events/event.service';
 import { plainToInstance } from 'class-transformer';
+import { PredictFunEvent, PredictFunEventEntity } from '../events/predictFunEvent.model';
 
 const EventsUnion = createUnionType({
   name: 'EventsUnion',
-  types: () => [PolymarketEvent, KalshiEvent] as const,
+  types: () => [PolymarketEvent, KalshiEvent, PredictFunEvent] as const,
 });
 
 @ObjectType()
@@ -26,11 +27,13 @@ class EventsByTextResponse {
   polymarket: PolymarketEvent[];
   @Field(() => [KalshiEvent])
   kalshi: KalshiEvent[];
+  @Field(() => [PredictFunEvent])
+  predictFun: PredictFunEvent[];
 }
 
 @Resolver()
 export class GQLEventResolver {
-  constructor(private readonly eventService: EventService) {}
+  constructor(private readonly eventService: EventService) { }
 
   @Mutation(() => [EventsUnion])
   async loadEvents(
@@ -81,6 +84,7 @@ export class GQLEventResolver {
       return {
         polymarket: [],
         kalshi: [],
+        predictFun: []
       };
     }
 
@@ -96,9 +100,18 @@ export class GQLEventResolver {
       title: text,
     });
 
+    const predictFunEvents = await this.eventService.findByTitlePredictFun({
+      first,
+      skip,
+      title: text,
+    });
+
+    console.log("Predict fun events :", predictFunEvents[0].markets)
+
     return {
       polymarket: polymarketEvents,
       kalshi: kalshiEvents,
+      predictFun: predictFunEvents
     };
   }
 

@@ -19,6 +19,7 @@ import {
 import { GqlWhereParsingService } from 'src/datasources/database/gqlWhereParsing.service';
 import { MarketWhere } from './market.interface';
 import { Err, Ok, Result } from 'src/helpers/helpertypes';
+import { modelFromPredictFunMarketEntity, PredictFunMarket, PredictFunMarketEntity, PredictFunUnloadedMarketEntity } from './predictFunMarket.model';
 
 type MarketServiceFindProps = {
   first: number;
@@ -33,15 +34,22 @@ export class MarketService {
     private polymarketMarketRepository: Repository<PolymarketMarketEntity>,
     @Inject('POLYMARKET_UNLOADED_MARKET_REPOSITORY')
     private polymarketUnloadedMarketRepository: Repository<PolymarketUnloadedMarketEntity>,
+
     @Inject('KALSHI_MARKET_REPOSITORY')
     private kalshiMarketRepository: Repository<KalshiMarketEntity>,
     @Inject('KALSHI_UNLOADED_MARKET_REPOSITORY')
     private kalshiUnloadedMarketRepository: Repository<KalshiUnloadedMarketEntity>,
+
+    @Inject('PREDICT_FUN_MARKET_REPOSITORY')
+    private predictFunMarketRepository: Repository<PredictFunMarketEntity>,
+    @Inject('PREDICT_FUN_UNLOADED_MARKET_REPOSITORY')
+    private predictFunUnloadedMarketRepository: Repository<PredictFunUnloadedMarketEntity>,
+
     @Inject('DATA_SOURCE')
     private dataSource: DataSource,
 
     private gqlWhereParsingService: GqlWhereParsingService,
-  ) {}
+  ) { }
 
   async findByTitlePolymarket({
     first,
@@ -279,6 +287,31 @@ export class MarketService {
     }
   }
 
+  async findPolymarketMarketByConditionID(
+    conditionId: string,
+  ): Promise<Result<PolymarketMarket, string>> {
+    const response = await this.polymarketMarketRepository.findOne({
+      where: {
+        conditionId: conditionId,
+      },
+    });
+
+    if (!response) {
+      return Err('Polymarket market not found');
+    }
+
+    try {
+      const model = modelFromPolymarketMarketEntity(response);
+      if (!model) {
+        return Err('Unable to parse polymarket market');
+      }
+      return Ok(model);
+    } catch (e) {
+      return Err(`Unable to parse polymarket market - ${e}`);
+    }
+  }
+
+
   async findKalshiMarketByTicker(
     ticker: string,
   ): Promise<Result<KalshiMarket, string>> {
@@ -300,6 +333,30 @@ export class MarketService {
       return Ok(model);
     } catch (e) {
       return Err(`Unable to parse kalshi market - ${e}`);
+    }
+  }
+
+  async findPredictFunMarketByID(
+    id: string,
+  ): Promise<Result<PredictFunMarket, string>> {
+    const response = await this.predictFunMarketRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!response) {
+      return Err('Predict fun market not found');
+    }
+
+    try {
+      const model = modelFromPredictFunMarketEntity(response);
+      if (!model) {
+        return Err('Unable to parse predict fun market');
+      }
+      return Ok(model);
+    } catch (e) {
+      return Err(`Unable to predict fun kalshi market - ${e}`);
     }
   }
 }

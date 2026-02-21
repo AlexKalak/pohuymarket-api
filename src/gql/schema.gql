@@ -6,11 +6,12 @@ type ArbitragePair {
   allowTrading: Boolean
   createdAt: DateScalar
   id: Int
-  kalshiMarket: KalshiMarket
-  kalshiMarketTicker: String
-  polymarketMarket: PolymarketMarket
-  polymarketMarketID: Int
-  revertPolymarket: Boolean
+  market1: MarketUnion
+  market2: MarketUnion
+  marketIdentificator1: String
+  marketIdentificator2: String
+  marketType1: String
+  marketType2: String
   updatedAt: DateScalar
 }
 
@@ -36,9 +37,10 @@ input BidAskUpdateWhere {
 scalar BigInt
 
 input CreateArbitragePairInput {
-  kalshiMarketTicker: String!
-  polymarketMarketID: Float!
-  revertPolymarket: Boolean!
+  marketIdentificator1: String!
+  marketIdentificator2: String!
+  marketType1: String!
+  marketType2: String!
 }
 
 scalar DateScalar
@@ -54,9 +56,10 @@ input EventWhere {
 type EventsByTextResponse {
   kalshi: [KalshiEvent!]!
   polymarket: [PolymarketEvent!]!
+  predictFun: [PredictFunEvent!]!
 }
 
-union EventsUnion = KalshiEvent | PolymarketEvent
+union EventsUnion = KalshiEvent | PolymarketEvent | PredictFunEvent
 
 type KalshiEvent {
   markets: [KalshiMarket!]
@@ -80,6 +83,19 @@ type KalshiMarket {
   yesSubtitle: String
 }
 
+type KalshiOrderFill {
+  action: String
+  contractsAmount: Float
+  createdAt: DateScalar
+  id: Int
+  kalshiMarketTicker: String
+  kalshiOrderID: String
+  price: Float
+  side: String
+  timestamp: BigInt
+  updatedAt: DateScalar
+}
+
 input LoadEventInput {
   slug: String
   ticker: String
@@ -91,7 +107,7 @@ type MarketByTextResponse {
   polymarket: [PolymarketMarket!]!
 }
 
-union MarketUnion = KalshiMarket | PolymarketMarket
+union MarketUnion = KalshiMarket | PolymarketMarket | PredictFunMarket
 
 input MarketWhere {
   identificator: String
@@ -108,6 +124,8 @@ type Order {
   price: Float
   size: Int
 }
+
+union OrderFillsUnion = KalshiOrderFill | PolymarketOrderFill
 
 type OrdersMatch {
   blockNumber: Int
@@ -158,9 +176,9 @@ type PolymarketMarket {
   conditionId: String
   endDate: DateScalar
   event: PolymarketEvent
-  event_id: Int
+  event_id: String
   icon: String
-  id: Int
+  id: String
   image: String
   negRisk: Boolean
   negRiskMarketID: String
@@ -173,6 +191,67 @@ type PolymarketMarket {
   yesAssetId: String
 }
 
+type PolymarketOrderFill {
+  action: String
+  asset_id: String
+  contractsAmount: Float
+  createdAt: DateScalar
+  id: Int
+  polymarketMarketIdentificator: String
+  polymarketOrderID: String
+  price: Float
+  timestamp: BigInt
+  updatedAt: DateScalar
+}
+
+type PredictFunEvent {
+  categorySlug: String
+  conditionId: String
+  createdAt: DateScalar
+  description: String
+  id: Int
+  imageUrl: String
+  isNegRisk: Boolean
+  markets: [PredictFunMarket!]
+  question: String
+  status: String
+  title: String
+}
+
+type PredictFunMarket {
+  boostEndsAt: DateScalar
+  boostStartsAt: DateScalar
+  categorySlug: String
+  conditionId: String
+  createdAt: DateScalar
+  decimalPrecision: String
+  description: String
+  event_id: String
+  feeRateBps: String
+  id: String
+  imageUrl: String
+  isBoosted: Boolean
+  isNegRisk: Boolean
+  isYieldBearing: Boolean
+  marketVariant: String
+  oracleQuestionId: String
+  outcomes: [PredictFunOutcomeModel!]
+  polymarketConditionIds: String
+  question: String
+  resolverAddress: String
+  shareThreshold: String
+  spreadThreshold: String
+  status: String
+  title: String
+}
+
+type PredictFunOutcomeModel {
+  indexSet: Int
+  name: String
+  onChainId: String
+  status: String
+}
+
 type Query {
   arbitragePairs(first: Int, skip: Int, where: ArbitragePairWhere): [ArbitragePair!]!
   bestBidAskUpdates(first: Int, fromHead: Boolean, skip: Int, where: BidAskUpdateWhere): [BidAskUpdate!]!
@@ -181,6 +260,7 @@ type Query {
   marketByIdentificator(identificator: String): MarketUnion!
   markets(first: Int, skip: Int, where: MarketWhere): [MarketUnion!]!
   marketsByText(first: Int, skip: Int, text: String): MarketByTextResponse!
+  orderFills(marketIdentificator: String): [OrderFillsUnion!]!
   ordersMatches(first: Int, fromHead: Boolean, skip: Int, where: OrdersMatchWhere): [OrdersMatch!]!
 }
 

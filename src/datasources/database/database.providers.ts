@@ -10,6 +10,7 @@ import {
   PolymarketEventEntity,
   PolymarketUnloadedEventEntity,
 } from 'src/modules/events/polymarketEvent.model';
+import { PredictFunEventEntity, PredictFunUnloadedEventEntity } from 'src/modules/events/predictFunEvent.model';
 import {
   KalshiMarketEntity,
   KalshiUnloadedMarketEntity,
@@ -18,6 +19,8 @@ import {
   PolymarketMarketEntity,
   PolymarketUnloadedMarketEntity,
 } from 'src/modules/markets/polymarketMarket.model';
+import { PredictFunMarketEntity, PredictFunUnloadedMarketEntity } from 'src/modules/markets/predictFunMarket.model';
+import { KalshiOrderEntity, KalshiOrderFillEntity, PolymarketOrderEntity, PolymarketOrderFillEntity } from 'src/modules/orders/orders.model';
 import { DataSource } from 'typeorm';
 
 export const databaseProviders: Provider[] = [
@@ -29,7 +32,7 @@ export const databaseProviders: Provider[] = [
         host: 'localhost',
         port: 5432,
         username: 'postgres',
-        password: '12341234',
+        password: 'postgres',
         database: 'pohuymarket',
         entities: [
           OrdersMatch,
@@ -43,6 +46,14 @@ export const databaseProviders: Provider[] = [
           KalshiUnloadedMarketEntity,
           ArbitragePairEntity,
           BidAskUpdateEntity,
+          PolymarketOrderEntity,
+          KalshiOrderEntity,
+          PolymarketOrderFillEntity,
+          KalshiOrderFillEntity,
+          PredictFunEventEntity,
+          PredictFunUnloadedEventEntity,
+          PredictFunMarketEntity,
+          PredictFunUnloadedMarketEntity,
         ],
         synchronize: false, // ❌ very important, don’t let TypeORM change schema
       });

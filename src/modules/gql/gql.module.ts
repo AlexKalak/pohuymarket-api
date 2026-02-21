@@ -10,6 +10,8 @@ import { MarketModule } from '../markets/market.module';
 import { GQLMarketResolver } from './gql.markets.resolver';
 import { ArbitrageModule } from '../arbitrage/arbitrage.module';
 import { GQLArbitrageResolver } from './gql.arbitrage.resolver';
+import { OrdersModule } from '../orders/orders.module';
+import { GQLOrdersResolver } from './gql.orders.resolver';
 
 @Module({
   imports: [
@@ -19,6 +21,7 @@ import { GQLArbitrageResolver } from './gql.arbitrage.resolver';
     EventModule,
     MarketModule,
     ArbitrageModule,
+    OrdersModule
   ],
   providers: [
     GQLOrdersMatchResolver,
@@ -26,6 +29,7 @@ import { GQLArbitrageResolver } from './gql.arbitrage.resolver';
     GQLEventResolver,
     GQLMarketResolver,
     GQLArbitrageResolver,
+    GQLOrdersResolver,
   ],
 })
-export class GQLModule {}
+export class GQLModule { }

@@ -9,6 +9,10 @@ import {
 import { Err, Ok, Result } from 'src/helpers/helpertypes';
 import { MarketService } from '../markets/market.service';
 import { GqlWhereParsingService } from 'src/datasources/database/gqlWhereParsing.service';
+import { MarketType } from '../markets/market.interface';
+import { KalshiMarket, KalshiMarketEntity } from '../markets/kalshiMarket.model';
+import { PolymarketMarket, PolymarketMarketEntity } from '../markets/polymarketMarket.model';
+import { PredictFunMarket, PredictFunMarketEntity } from '../markets/predictFunMarket.model';
 
 type FindArbitragePairsProps = {
   first: number;
@@ -17,9 +21,10 @@ type FindArbitragePairsProps = {
 };
 
 type CreatingPair = {
-  polymarketMarketID: number;
-  kalshiMarketTicker: string;
-  revertPolymarket: boolean;
+  marketIdentificator1: string
+  marketIdentificator2: string
+  marketType1: string
+  marketType2: string
 };
 
 @Injectable()
@@ -29,45 +34,109 @@ export class ArbitrageService {
     private arbitragePairsRepository: Repository<ArbitragePairEntity>,
     private gqlWhereParsingService: GqlWhereParsingService,
     private marketService: MarketService,
-  ) {}
+  ) { }
 
   async find({
     first,
     skip,
     where,
   }: FindArbitragePairsProps): Promise<ArbitragePair[]> {
+    let arbitragePairs: ArbitragePairEntity[] = []
     if (!where) {
-      return this.arbitragePairsRepository
+      arbitragePairs = await this.arbitragePairsRepository
         .find({
           order: {
             id: 'DESC',
           },
           skip: skip,
           take: first,
-          relations: ['polymarketMarket', 'kalshiMarket'],
         })
-        .then((entities) =>
-          entities.map((entity) => modelFromArbitragePairEntity(entity)),
-        );
+    } else {
+      const queryBuilder = this.arbitragePairsRepository
+        .createQueryBuilder('arbitragePairs')
+
+      const metadata = this.arbitragePairsRepository.metadata;
+      this.gqlWhereParsingService.parse(queryBuilder, where, metadata);
+
+      arbitragePairs = await queryBuilder
+        .orderBy('arbitragePairs.id', 'DESC')
+        .take(first)
+        .skip(skip)
+        .getMany();
     }
 
-    const queryBuilder = this.arbitragePairsRepository
-      .createQueryBuilder('arbitragePairs')
-      .leftJoinAndSelect('arbitragePairs.polymarketMarket', 'polymarketMarket')
-      .leftJoinAndSelect('arbitragePairs.kalshiMarket', 'kalshiMarket');
+    const promises: Promise<ArbitragePair | undefined>[] = []
+    arbitragePairs.forEach(arbPair => {
+      promises.push(this.loadMarketsForArbPairEntity(arbPair))
+    })
 
-    const metadata = this.arbitragePairsRepository.metadata;
-    this.gqlWhereParsingService.parse(queryBuilder, where, metadata);
+    const arbPairsDirty = await Promise.all(promises)
+    return arbPairsDirty.filter(arbPair => !!arbPair)
+  }
 
-    const arbitragePairsEntities = await queryBuilder
-      .orderBy('arbitragePairs.id', 'DESC')
-      .take(first)
-      .skip(skip)
-      .getMany();
+  private async loadMarketsForArbPairEntity(arbPair: ArbitragePairEntity): Promise<ArbitragePair | undefined> {
+    let firstPromise: Promise<Result<PolymarketMarket | KalshiMarket | PredictFunMarket, string>> | undefined
+    let secondPromise: Promise<Result<PolymarketMarket | KalshiMarket | PredictFunMarket, string>> | undefined
 
-    return arbitragePairsEntities.map((entity) =>
-      modelFromArbitragePairEntity(entity),
-    );
+
+    switch (arbPair.marketType1) {
+      case MarketType.Polymarket:
+        firstPromise = this.marketService.findPolymarketMarketByConditionID(
+          arbPair.marketIdentificator1,
+        );
+        break;
+      case MarketType.Kalshi:
+        firstPromise = this.marketService.findKalshiMarketByTicker(
+          arbPair.marketIdentificator1,
+        );
+        break;
+      case MarketType.PredictFun:
+        firstPromise = this.marketService.findPredictFunMarketByID(
+          arbPair.marketIdentificator1,
+        );
+        break;
+    }
+
+    switch (arbPair.marketType2) {
+      case MarketType.Polymarket:
+        secondPromise = this.marketService.findPolymarketMarketByConditionID(
+          arbPair.marketIdentificator2,
+        );
+        break;
+      case MarketType.Kalshi:
+        secondPromise = this.marketService.findKalshiMarketByTicker(
+          arbPair.marketIdentificator2,
+        );
+        break;
+      case MarketType.PredictFun:
+        secondPromise = this.marketService.findPredictFunMarketByID(
+          arbPair.marketIdentificator2,
+        );
+        break;
+    }
+
+    const marketResults = await Promise.all([firstPromise, secondPromise])
+
+    let marketResult1 = marketResults[0]
+    let marketResult2 = marketResults[1]
+
+    let market1: PolymarketMarket | KalshiMarket | PredictFunMarket | undefined = undefined
+    let market2: PolymarketMarket | KalshiMarket | PredictFunMarket | undefined = undefined
+
+    if (marketResult1?.ok) {
+      market1 = marketResult1.value
+    }
+    if (marketResult2?.ok) {
+      market2 = marketResult2.value
+    }
+
+    try {
+      const model = modelFromArbitragePairEntity(arbPair, market1, market2);
+      return model
+    } catch (e) {
+      return
+    }
+
   }
 
   public async deleteArbitrages({ ids }: { ids: number[] }): Promise<boolean> {
@@ -107,65 +176,100 @@ export class ArbitrageService {
       return Ok([]);
     }
 
-    const validPairs = await this.getValidPairsForCreation(pairs);
+    const { validPairs, markets } = await this.getValidPairsForCreation(pairs);
 
-    let filledPairEntities: ArbitragePairEntity[] = [];
+    let createdPairs: ArbitragePairEntity[] = [];
     try {
-      const createdPairsEntities =
+      createdPairs =
         await this.arbitragePairsRepository.save(validPairs);
-
-      const ids = createdPairsEntities.map((m) => m.id);
-
-      filledPairEntities = await this.arbitragePairsRepository.find({
-        where: {
-          id: In(ids),
-        },
-        relations: ['kalshiMarket', 'polymarketMarket'],
-      });
     } catch (e) {
       console.log('Unable to save pairs: ', e);
       return Err(`Unable to save pairs: ${e}`);
     }
 
     const createdPairsModels: ArbitragePair[] = [];
-    for (const arbitragePairEntity of filledPairEntities) {
+    for (const arbitragePairEntity of createdPairs) {
+      let market1 = markets.get(arbitragePairEntity.marketIdentificator1)
+      let market2 = markets.get(arbitragePairEntity.marketIdentificator2)
+
       try {
-        console.log('enti: ', arbitragePairEntity);
-        const model = modelFromArbitragePairEntity(arbitragePairEntity);
-        console.log('MOdel: ', model);
+        const model = modelFromArbitragePairEntity(arbitragePairEntity, market1, market2);
         createdPairsModels.push(model);
       } catch (e) {
-        console.log(e);
         continue;
       }
     }
-    console.log('');
 
     return Ok(createdPairsModels);
   }
 
   private async getValidPairsForCreation(
     pairs: CreatingPair[],
-  ): Promise<CreatingPair[]> {
+  ): Promise<{
+    validPairs: CreatingPair[],
+    markets: Map<string, PolymarketMarket | KalshiMarket | PredictFunMarket>
+  }> {
     const validPairs: CreatingPair[] = [];
 
+    const markets: Map<string, PolymarketMarket | KalshiMarket | PredictFunMarket> = new Map()
+
+    let firstPromise: Promise<Result<PolymarketMarket | KalshiMarket | PredictFunMarket, string>> | undefined
+    let secondPromise: Promise<Result<PolymarketMarket | KalshiMarket | PredictFunMarket, string>> | undefined
+
     for (const checkingPair of pairs) {
-      const polymarketPromise = this.marketService.findPolymarketMarketByID(
-        checkingPair.polymarketMarketID,
-      );
-      const kalshiPromise = this.marketService.findKalshiMarketByTicker(
-        checkingPair.kalshiMarketTicker,
-      );
+      switch (checkingPair.marketType1) {
+        case MarketType.Polymarket:
+          firstPromise = this.marketService.findPolymarketMarketByID(
+            Number(checkingPair.marketIdentificator1),
+          );
+          break;
+        case MarketType.Kalshi:
+          firstPromise = this.marketService.findKalshiMarketByTicker(
+            checkingPair.marketIdentificator1,
+          );
+          break;
+        case MarketType.PredictFun:
+          firstPromise = this.marketService.findPredictFunMarketByID(
+            checkingPair.marketIdentificator1,
+          );
+          break;
+      }
+
+      switch (checkingPair.marketType2) {
+        case MarketType.Polymarket:
+          secondPromise = this.marketService.findPolymarketMarketByID(
+            Number(checkingPair.marketIdentificator2),
+          );
+          break;
+        case MarketType.Kalshi:
+          secondPromise = this.marketService.findKalshiMarketByTicker(
+            checkingPair.marketIdentificator2,
+          );
+          break;
+        case MarketType.PredictFun:
+          secondPromise = this.marketService.findPredictFunMarketByID(
+            checkingPair.marketIdentificator2,
+          );
+          break;
+      }
 
       try {
-        await Promise.all([polymarketPromise, kalshiPromise]);
+        const marketResults = await Promise.all([firstPromise, secondPromise]);
+        const market1Result = marketResults[0]
+        const market2Result = marketResults[1]
 
+        if (market1Result?.ok) {
+          markets.set(checkingPair.marketIdentificator1, market1Result.value)
+        }
+        if (market2Result?.ok) {
+          markets.set(checkingPair.marketIdentificator2, market2Result.value)
+        }
         validPairs.push(checkingPair);
       } catch {
         continue;
       }
     }
 
-    return validPairs;
+    return { validPairs, markets };
   }
 }

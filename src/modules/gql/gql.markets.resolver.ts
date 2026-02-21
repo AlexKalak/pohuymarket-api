@@ -13,11 +13,9 @@ import { KalshiMarket } from '../markets/kalshiMarket.model';
 import { MarketWhere } from '../markets/market.interface';
 import { MarketService } from '../markets/market.service';
 import { plainToInstance } from 'class-transformer';
+import { PredictFunMarket } from '../markets/predictFunMarket.model';
+import { MarketsUnion } from '../arbitrage/arbitragePairs.model';
 
-const MarketsUnion = createUnionType({
-  name: 'MarketUnion',
-  types: () => [PolymarketMarket, KalshiMarket] as const,
-});
 
 @ObjectType()
 class MarketByTextResponse {
@@ -29,7 +27,7 @@ class MarketByTextResponse {
 
 @Resolver()
 export class GQLMarketResolver {
-  constructor(private readonly marketService: MarketService) {}
+  constructor(private readonly marketService: MarketService) { }
 
   @Query(() => MarketByTextResponse)
   async marketsByText(

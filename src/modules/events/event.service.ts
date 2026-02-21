@@ -23,6 +23,8 @@ import {
 import { GqlWhereParsingService } from 'src/datasources/database/gqlWhereParsing.service';
 import { EventType, EventWhere, LoadEventInput } from './event.interface';
 import { Err, Ok, Result } from '../../helpers/helpertypes';
+import { modelFromPredictFunUnloadedEventEntity, PredictFunEvent, PredictFunEventEntity, PredictFunUnloadedEventEntity } from './predictFunEvent.model';
+import { modelFromPredictFunUnloadedMarketEntity } from '../markets/predictFunMarket.model';
 
 type EventServiceFindProps = {
   first: number;
@@ -49,14 +51,18 @@ export class EventService {
     private polymarketEventRepository: Repository<PolymarketEventEntity>,
     @Inject('KALSHI_EVENT_REPOSITORY')
     private kalshiEventRepository: Repository<KalshiEventEntity>,
+    @Inject('PREDICT_FUN_EVENT_REPOSITORY')
+    private predictFunEventRepository: Repository<PredictFunEventEntity>,
 
     @Inject('POLYMARKET_UNLOADED_EVENT_REPOSITORY')
     private polymarketUnloadedEventRepository: Repository<PolymarketUnloadedEventEntity>,
     @Inject('KALSHI_UNLOADED_EVENT_REPOSITORY')
     private kalshiUnloadedEventRepository: Repository<KalshiUnloadedEventEntity>,
+    @Inject('PREDICT_FUN_UNLOADED_EVENT_REPOSITORY')
+    private predictFunUnloadedEventRepository: Repository<PredictFunUnloadedEventEntity>,
 
     private gqlWhereParsingService: GqlWhereParsingService,
-  ) {}
+  ) { }
 
   async merge({
     events,
@@ -244,6 +250,47 @@ export class EventService {
       .filter((market) => !!market);
 
     return kalshiMarkets;
+  }
+
+  async findByTitlePredictFun({
+    first,
+    skip,
+    title,
+  }: {
+    first: number;
+    skip: number;
+    title: string;
+  }): Promise<PredictFunEvent[]> {
+    const qb = this.predictFunUnloadedEventRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.markets', 'markets')
+      .addSelect(
+        `
+      CASE
+          WHEN event.title= :search THEN 3
+          WHEN event.title ILIKE :prefix THEN 2
+          WHEN event.title% :search THEN 1
+          ELSE 0
+      END
+  `,
+        'match_rank',
+      )
+      .addSelect(`similarity(event.title, :search)`, 'similarity_score')
+      .setParameters({
+        search: title,
+        prefix: `${title}%`,
+      })
+      .orderBy('match_rank', 'DESC')
+      .addOrderBy('similarity_score', 'DESC')
+      .take(first)
+      .skip(skip);
+
+    const results = await qb.getRawAndEntities();
+    const predictFunEvents = results.entities
+      .map((entity) => modelFromPredictFunUnloadedEventEntity(entity))
+      .filter((event) => !!event);
+
+    return predictFunEvents
   }
 
   async findPolymarketEvent({

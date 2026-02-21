@@ -7,6 +7,7 @@ import {
   KalshiMarketEntity,
   KalshiUnloadedMarketEntity,
 } from './kalshiMarket.model';
+import { PredictFunMarketEntity, PredictFunUnloadedMarketEntity } from './predictFunMarket.model';
 
 export const marketProviders = [
   {
@@ -31,6 +32,18 @@ export const marketProviders = [
     provide: 'KALSHI_UNLOADED_MARKET_REPOSITORY',
     useFactory: (dataSource: DataSource) =>
       dataSource.getRepository(KalshiUnloadedMarketEntity),
+    inject: ['DATA_SOURCE'],
+  },
+  {
+    provide: 'PREDICT_FUN_MARKET_REPOSITORY',
+    useFactory: (dataSource: DataSource) =>
+      dataSource.getRepository(PredictFunMarketEntity),
+    inject: ['DATA_SOURCE'],
+  },
+  {
+    provide: 'PREDICT_FUN_UNLOADED_MARKET_REPOSITORY',
+    useFactory: (dataSource: DataSource) =>
+      dataSource.getRepository(PredictFunUnloadedMarketEntity),
     inject: ['DATA_SOURCE'],
   },
 ];

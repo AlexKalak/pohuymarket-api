@@ -19,9 +19,12 @@ import {
   KalshiMarketEntity,
   modelFromKalshiMarketEntity,
 } from '../markets/kalshiMarket.model';
-import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
+import { createUnionType, Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { DateScalar } from '../gql/gql.scalars';
 import { StraightParsable } from 'src/models/decorators';
+import { IMarket } from '../markets/market.interface';
+import { PredictFunEvent } from '../events/predictFunEvent.model';
+import { PredictFunMarket } from '../markets/predictFunMarket.model';
 
 @InputType()
 export class ArbitragePairWhere {
@@ -38,16 +41,15 @@ export class ArbitragePairWhere {
   kalshiMarketTicker?: string;
 }
 
+export const MarketsUnion = createUnionType({
+  name: 'MarketUnion',
+  types: () => [PolymarketMarket, KalshiMarket, PredictFunMarket] as const,
+});
+
 @ObjectType()
 export class ArbitragePair {
   @Field(() => Int, { nullable: true })
   id: number;
-
-  @Field(() => Int, { nullable: true })
-  polymarketMarketID: number;
-
-  @Field(() => Boolean, { nullable: true })
-  revertPolymarket: boolean;
 
   @Field(() => DateScalar, { nullable: true })
   createdAt: Date; // auto-set on INSERT
@@ -55,82 +57,79 @@ export class ArbitragePair {
   @Field(() => DateScalar, { nullable: true })
   updatedAt: Date; // auto-set on UPDATE
 
-  @Field(() => PolymarketMarket, { nullable: true })
-  polymarketMarket: PolymarketMarket;
-
-  @Field(() => String, { nullable: true })
-  kalshiMarketTicker: string;
-
-  @Field(() => KalshiMarket, { nullable: true })
-  kalshiMarket: KalshiMarket;
-
   @Field(() => Boolean, { nullable: true })
   allowTrading!: boolean;
+
+  @Field(() => String, { nullable: true })
+  marketType1!: string
+
+  @Field(() => String, { nullable: true })
+  marketIdentificator1!: string
+
+  @Field(() => String, { nullable: true })
+  marketType2!: string
+
+  @Field(() => String, { nullable: true })
+  marketIdentificator2!: string
+
+  @Field(() => MarketsUnion, { nullable: true })
+  market1: KalshiMarket | PredictFunMarket | PolymarketMarket
+  @Field(() => MarketsUnion, { nullable: true })
+  market2: KalshiMarket | PredictFunMarket | PolymarketMarket
 }
 
 @Entity('arbitrage_pairs')
-@Unique(['polymarketMarketID', 'kalshiMarketTicker'])
+@Unique(['marketIdentificator1', 'marketIdentificator2'])
 export class ArbitragePairEntity {
   @Index()
   @PrimaryGeneratedColumn()
-  id!: number;
+  id!: number
 
   @CreateDateColumn()
-  createdAt!: Date; // auto-set on INSERT
+  createdAt!: Date;   // auto-set on INSERT
 
   @UpdateDateColumn()
-  updatedAt!: Date; // auto-set on UPDATE
+  updatedAt!: Date;   // auto-set on UPDATE
 
-  @Column('int')
-  polymarketMarketID!: number;
+  @Column("varchar")
+  marketType1!: string
 
-  @Column('boolean')
-  revertPolymarket!: boolean;
+  @Column("varchar")
+  marketIdentificator1!: string
 
-  @ManyToOne(() => PolymarketMarketEntity)
-  @JoinColumn({ name: 'polymarketMarketID', referencedColumnName: 'id' })
-  polymarketMarket!: PolymarketMarketEntity;
+  @Column("varchar")
+  marketType2!: string
 
-  @Column('varchar')
-  kalshiMarketTicker!: string;
+  @Column("varchar")
+  marketIdentificator2!: string
 
-  @ManyToOne(() => KalshiMarketEntity)
-  @JoinColumn({ name: 'kalshiMarketTicker', referencedColumnName: 'ticker' })
-  kalshiMarket!: KalshiMarketEntity;
-
-  @Column('boolean', { default: false })
-  allowTrading!: boolean;
+  @Column("boolean", { default: false })
+  allowTrading!: boolean
 }
+
 
 export function modelFromArbitragePairEntity(
   entity: ArbitragePairEntity,
+  market1?: PolymarketMarket | KalshiMarket | PredictFunMarket,
+  market2?: PolymarketMarket | KalshiMarket | PredictFunMarket,
 ): ArbitragePair {
   const model = new ArbitragePair();
   model.id = entity.id;
-  model.polymarketMarketID = entity.polymarketMarketID;
-  model.kalshiMarketTicker = entity.kalshiMarketTicker;
-  model.revertPolymarket = entity.revertPolymarket;
   model.createdAt = entity.createdAt;
   model.updatedAt = entity.updatedAt;
   model.allowTrading = entity.allowTrading;
-  const polymarketMarket = modelFromPolymarketMarketEntity(
-    entity.polymarketMarket,
-  );
-  if (!polymarketMarket) {
-    throw new Error(
-      'Unable to construct arbitrage pair - polymarketMarket not found',
-    );
-  }
 
-  const kalshiMarket = modelFromKalshiMarketEntity(entity.kalshiMarket);
-  if (!kalshiMarket) {
-    throw new Error(
-      'Unable to construct arbitrage pair - kalshiMarket not found',
-    );
-  }
+  model.marketIdentificator1 = entity.marketIdentificator1;
+  model.marketIdentificator2 = entity.marketIdentificator2;
+  model.marketType1 = entity.marketType1;
+  model.marketType2 = entity.marketType2;
 
-  model.polymarketMarket = polymarketMarket;
-  model.kalshiMarket = kalshiMarket;
+  if (market1) {
+    model.market1 = market1
+  }
+  if (market2) {
+    model.market2 = market2
+  }
 
   return model;
 }
