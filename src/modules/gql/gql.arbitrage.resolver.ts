@@ -85,6 +85,7 @@ export class GQLArbitrageResolver {
     @Args('pairs', { type: () => [CreateArbitragePairInput], nullable: true })
     pairs: CreateArbitragePairInput[] = [],
   ): Promise<ArbitragePair[]> {
+    console.log("Create pair: ", pairs)
     const arbitragePairsResult =
       await this.arbitrageService.createArbitragePairs(pairs);
     if (!arbitragePairsResult.ok) {

@@ -119,9 +119,11 @@ export class ArbitrageService {
 
     let marketResult1 = marketResults[0]
     let marketResult2 = marketResults[1]
+    console.log("marketresult2 : ", marketResult2)
 
     let market1: PolymarketMarket | KalshiMarket | PredictFunMarket | undefined = undefined
     let market2: PolymarketMarket | KalshiMarket | PredictFunMarket | undefined = undefined
+
 
     if (marketResult1?.ok) {
       market1 = marketResult1.value
@@ -177,6 +179,7 @@ export class ArbitrageService {
     }
 
     const { validPairs, markets } = await this.getValidPairsForCreation(pairs);
+    console.log("validPairs: ", validPairs)
 
     let createdPairs: ArbitragePairEntity[] = [];
     try {
@@ -219,8 +222,8 @@ export class ArbitrageService {
     for (const checkingPair of pairs) {
       switch (checkingPair.marketType1) {
         case MarketType.Polymarket:
-          firstPromise = this.marketService.findPolymarketMarketByID(
-            Number(checkingPair.marketIdentificator1),
+          firstPromise = this.marketService.findPolymarketMarketByConditionID(
+            checkingPair.marketIdentificator1,
           );
           break;
         case MarketType.Kalshi:
@@ -237,8 +240,8 @@ export class ArbitrageService {
 
       switch (checkingPair.marketType2) {
         case MarketType.Polymarket:
-          secondPromise = this.marketService.findPolymarketMarketByID(
-            Number(checkingPair.marketIdentificator2),
+          secondPromise = this.marketService.findPolymarketMarketByConditionID(
+            checkingPair.marketIdentificator2,
           );
           break;
         case MarketType.Kalshi:
@@ -259,13 +262,16 @@ export class ArbitrageService {
         const market2Result = marketResults[1]
 
         if (market1Result?.ok) {
+          console.log("Not found market1: ", market1Result.value)
           markets.set(checkingPair.marketIdentificator1, market1Result.value)
         }
         if (market2Result?.ok) {
+          console.log("Not found market2: ", market2Result.value)
           markets.set(checkingPair.marketIdentificator2, market2Result.value)
         }
         validPairs.push(checkingPair);
-      } catch {
+      } catch (e) {
+        console.log("Got error: ", e)
         continue;
       }
     }
